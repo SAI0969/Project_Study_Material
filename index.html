@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>
+   Computer Architecture &amp; Organization Guide
+  </title>
+  <style>
+   *{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+body{
+    font-family:'Segoe UI',sans-serif;
+    line-height:1.6;
+    color:#1f2937;
+    background:
+        linear-gradient(135deg,#f8fafc 0%,#eef2ff 50%,#f8fafc 100%);
+}
+
+.wrap{
+    max-width:1200px;
+    margin:auto;
+}
+
+header{
+    padding:60px 20px;
+    text-align:center;
+}
+
+header h1{
+    font-size:clamp(2.5rem,5vw,3.5rem);
+    margin-bottom:15px;
+    color:#111827;
+}
+
+.subtitle{
+    max-width:850px;
+    margin:auto;
+    color:#6b7280;
+    font-size:1.1rem;
+}
+
+nav{
+    position:sticky;
+    top:10px;
+    z-index:100;
+    margin:0 auto;
+    width:min(95%,1200px);
+}
+
+nav .wrap{
+    display:flex;
+    gap:10px;
+    overflow-x:auto;
+    padding:12px;
+    backdrop-filter:blur(15px);
+    background:rgba(255,255,255,.7);
+    border:1px solid rgba(255,255,255,.4);
+    border-radius:18px;
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+}
+
+nav a{
+    text-decoration:none;
+    color:#374151;
+    padding:10px 16px;
+    border-radius:12px;
+    transition:.25s;
+    white-space:nowrap;
+}
+
+nav a:hover{
+    background:white;
+    transform:translateY(-2px);
+}
+
+nav a.disabled-nav {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+main{
+    padding:35px 20px 60px;
+}
+
+section{
+    background:rgba(255,255,255,.75);
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.5);
+    border-radius:24px;
+    padding:30px;
+    margin-bottom:30px;
+    box-shadow:0 15px 35px rgba(0,0,0,.08);
+    position: relative;
+    transition: all 0.4s ease;
+}
+
+section.locked-section {
+    filter: blur(4px);
+    opacity: 0.5;
+    pointer-events: none;
+    user-select: none;
+}
+
+.lock-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(241, 245, 249, 0.8);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 24px;
+    cursor: not-allowed;
+}
+
+.lock-card {
+    background: white;
+    padding: 20px 30px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    text-align: center;
+    border: 1px solid #e2e8f0;
+}
+
+h2{
+    margin-bottom:20px;
+    font-size:2rem;
+    color:#111827;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 8px;
+}
+
+h3{
+    margin:22px 0 10px;
+    color:#111827;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:18px;
+    margin-bottom: 20px;
+}
+
+.card{
+    background:white;
+    border:none;
+    border-radius:18px;
+    padding:20px;
+    box-shadow:0 8px 25px rgba(0,0,0,.06);
+    transition:.3s;
+}
+
+.card:hover{
+    transform:translateY(-3px);
+}
+
+.method{
+    border-left:5px solid #6366f1;
+}
+
+.warn{
+    border-left:5px solid #ef4444;
+}
+
+.note{
+    border-left:5px solid #f59e0b;
+}
+
+.memory-trick {
+    border-left:5px solid #10b981;
+    background: #f0fdf4;
+}
+
+.badge{
+    display:inline-block;
+    padding:5px 12px;
+    border-radius:999px;
+    background:#e0e7ff;
+    color:#4338ca;
+    font-weight:600;
+    font-size:.85rem;
+    margin-bottom: 10px;
+}
+
+.badge-trick {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+pre{
+    margin-top:12px;
+    padding:18px;
+    border-radius:16px;
+    background:#111827;
+    color:#f3f4f6;
+    overflow-x:auto;
+    font-family:Consolas,monospace;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin:15px 0;
+    overflow:hidden;
+    border-radius:16px;
+    background:white;
+    box-shadow:0 5px 20px rgba(0,0,0,.05);
+}
+
+th{
+    background:#f3f4f6;
+    color:#111827;
+    font-weight:600;
+    text-align: left;
+}
+
+th,td{
+    padding:14px;
+    border-bottom:1px solid #e5e7eb;
+}
+
+tr:last-child td{
+    border-bottom:none;
+}
+
+.quiz-box {
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 25px;
+    margin-top: 30px;
+}
+
+.quiz-question {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px dotted #e2e8f0;
+}
+
+.quiz-options {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.option-wrapper {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.option-wrapper:hover {
+    background: #f1f5f9;
+}
+
+.option-wrapper input {
+    margin-right: 12px;
+}
+
+.quiz-feedback {
+    padding: 15px;
+    border-radius: 12px;
+    margin-top: 15px;
+    font-weight: 600;
+    display: none;
+}
+
+.quiz-feedback.success {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.quiz-feedback.fail {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+button{
+    margin-top:15px;
+    padding:12px 24px;
+    border:none;
+    border-radius:12px;
+    background:#111827;
+    color:white;
+    font-weight:600;
+    cursor:pointer;
+    transition:.25s;
+}
+
+button:hover{
+    transform:translateY(-2px);
+    box-shadow:0 8px 20px rgba(17,24,39,.25);
+}
+
+.reset-btn {
+    background: #6b7280;
+    font-size: 0.8rem;
+    padding: 6px 12px;
+    margin-top: 10px;
+    border-radius: 8px;
+}
+
+p{
+    margin:8px 0;
+}
+
+ol,
+ul{
+    padding-left:22px;
+    margin:10px 0;
+}
+
+li + li{
+    margin-top:4px;
+}
+
+code{
+    font-family:Consolas,monospace;
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+  </style>
+ </head>
+ <body>
+  <header>
+   <div class="wrap">
+    <h1>
+     Computer Architecture &amp; Organization
+    </h1>
+    <p class="subtitle">
+     Contrast between computer architecture and organization, Fundamentals of computer architecture, Organization of von-Neumann machine, CPU, memory, input-output subsystems, control unit. Instruction set architecture of a CPU–registers, instruction execution cycle, RTL interpretation of instructions, addressing modes, types of instructions, instruction set, CISC &amp; RISC, Big-endian &amp; Little-endian representation.
+    </p>
+   </div>
+  </header>
+  
+  <nav>
+   <div class="wrap" id="nav-container">
+    <a href="#architecture-vs-organization" id="nav-arch">
+     Architecture vs Organisation
+    </a>
+    <a href="#Funda-of-Computer-Architecture" id="nav-funda" class="disabled-nav">
+     🔒 Fundamentals of Architecture
+    </a>
+   </div>
+  </nav>
+
+  <main class="wrap">
+   
+   <!-- Section 1: Architecture vs Organization -->
+   <section id="architecture-vs-organization">
+    <h2>1. Computer Architecture vs. Computer Organization</h2>
+    <p>Understanding the fundamental line of demarcation between the conceptual design space and the real-world operational hardware layout implementation.</p>
+    
+    <div class="grid">
+        <div class="card method">
+            <h3><span class="badge" style="background:#6366f1; color:white;">Definition</span> Computer Architecture</h3>
+            <p>Computer Architecture is the <strong>logical design</strong> of a computer system that defines how the system behaves and what functions it performs. It specifies the <strong>programmer-visible aspects</strong> of the computer.</p>
+            <p style="margin-top:10px;"><strong>Keywords:</strong></p>
+            <code>Logical design</code> <code>Programmer's view</code> <code>Functionality</code> <code>ISA (Instruction Set Architecture)</code>
+        </div>
+        
+        <div class="card method" style="border-left-color: #10b981;">
+            <h3><span class="badge" style="background:#10b981; color:white;">Definition</span> Computer Organization</h3>
+            <p>Computer Organization is the way the hardware components are arranged and interconnected to implement the architecture efficiently.</p>
+            <p style="margin-top:10px;"><strong>Keywords:</strong></p>
+            <code>Physical implementation</code> <code>Hardware design</code> <code>Internal operation</code> <code>Performance</code>
+        </div>
+    </div>
+
+    <!-- Relationship Summary -->
+    <div class="card method" style="border-left-color: #f59e0b; background: rgba(245, 158, 11, 0.02); margin-bottom: 20px;">
+        <h4>Relationship Between Architecture and Organization</h4>
+        <ul>
+            <li>Architecture tells <strong>what</strong> the computer should do.</li>
+            <li>Organization tells <strong>how</strong> the computer performs those tasks.</li>
+            <li><strong>Core Axiom:</strong> Many distinct organizations can implement the identical target architecture.</li>
+        </ul>
+        <p style="margin-top: 10px;"><strong>Example:</strong> Two laptops may have the same <em>Intel Core i5 architecture</em> but completely different cache sizes, clock speeds, and memory technologies. Both run the exact same software because their architecture matches perfectly.</p>
+    </div>
+
+    <!-- Components Breakdown -->
+    <h3>Core Components Breakdown</h3>
+    <div class="grid">
+        <div class="card note" style="border-left-color: #3b82f6;">
+            <h4>Why Should We Learn Computer Architecture?</h4>
+            <ul style="font-size: 0.95rem;">
+                <li>Understand how computers work internally.</li>
+                <li>Write efficient, speed-optimized programs.</li>
+                <li>Choose better hardware layout setups.</li>
+                <li>Design faster computing engines.</li>
+                <li>Form a baseline to learn advanced computational subjects like Operating Systems and Embedded Systems.</li>
+            </ul>
+        </div>
+
+        <div class="card note" style="border-left-color: #a855f7;">
+            <h4>Components of a Computer System</h4>
+            <p>A standard computer system consists mainly of:</p>
+            <code>CPU</code> <code>Memory</code> <code>Input Devices</code> <code>Output Devices</code> <code>Storage Devices</code> <code>Bus</code>
+            <h5 style="margin-top: 10px; margin-bottom: 5px;">CPU Structural Subsystems:</h5>
+            <p>The CPU contains: <strong>ALU (Arithmetic Logic Unit)</strong>, <strong>CU (Control Unit)</strong>, and internal fast <strong>Registers</strong>.</p>
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- Register Deep Dive -->
+        <div class="card method" style="border-left-color: #ec4899;">
+            <h4>Internal CPU Registers &amp; Core Memory Hierarchy</h4>
+            <p>Registers are very small, ultra-fast local memory workspaces constructed inside the CPU block:</p>
+            <ul style="font-size: 0.9rem; margin-bottom: 10px;">
+                <li><strong>Program Counter (PC):</strong> Stores the address of the next execution instruction.</li>
+                <li><strong>Instruction Register (IR):</strong> Holds the currently executing instruction code payload.</li>
+                <li><strong>Accumulator (AC):</strong> Stores immediate arithmetic computing results.</li>
+                <li><strong>Memory Address Register (MAR):</strong> Holds the memory location target address actively being read or written.</li>
+                <li><strong>Memory Data Register (MDR):</strong> Holds the data payload transferred from or going into memory.</li>
+            </ul>
+            <h5 style="margin-top: 5px; color: #4b5563;">Memory Hierarchy (Fastest &rarr; Slowest):</h5>
+            <code style="display: block; text-align: center; padding: 5px;">Registers &rarr; Cache &rarr; RAM &rarr; SSD/HDD</code>
+            <p style="font-size: 0.85rem; color: #6b7280; margin-top: 5px;">*As speed decreases, total capacity increases, and cost per GB drops.</p>
+        </div>
+
+        <!-- Execution Cycle Deep Dive -->
+        <div class="card method" style="border-left-color: #8b5cf6;">
+            <h4>The Fetch-Decode-Execute Cycle &amp; Foundations</h4>
+            <p>The Von Neumann Architecture establishes that instructions and data are stored in the same unified memory space. The CPU continuously runs a 3-step cycle loop:</p>
+            <ol style="font-size: 0.9rem; padding-left: 20px;">
+                <li><strong>Fetch Instruction:</strong> Pulls code from memory address tracked by PC into the IR.</li>
+                <li><strong>Decode Instruction:</strong> The Control Unit parses opcode fields to identify commands.</li>
+                <li><strong>Execute Instruction:</strong> ALU handles logic calculations, updates flags or registers.</li>
+            </ol>
+            
+            <h5 style="margin-top: 12px; color: #4b5563;">Hardware vs Software Matrix:</h5>
+            <table style="font-size: 0.85rem; margin: 5px 0 0 0;">
+                <tr><th>Hardware (Physical devices, touchable)</th><td>CPU, Keyboard, Registers</td></tr>
+                <tr><th>Software (Logical programs, untouched)</th><td>Windows, Google Chrome</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <h3>Core Comparison Blueprint</h3>
+    <table>
+     <thead>
+      <tr>
+       <th>Computer Architecture (What to design)</th>
+       <th>Computer Organization (How to implement)</th>
+      </tr>
+     </thead>
+     <tbody>
+      <tr>
+       <td>Deals with <b>what</b> the computer does (Functionality).</td>
+       <td>Deals with <b>how</b> the computer does it (Implementation).</td>
+      </tr>
+      <tr>
+       <td>Visible to the programmer.</td>
+       <td>Hidden from the programmer.</td>
+      </tr>
+      <tr>
+       <td>Defines system logical design and specifications.</td>
+       <td>Defines physical hardware layouts and component operations.</td>
+      </tr>
+      <tr>
+       <td><b>Includes instruction set, data types, addressing modes.</b></td>
+       <td><b>Includes hardware units, internal signals, and interconnections.</b></td>
+      </tr>
+      <tr>
+       <td>Changes rarely across generation variations.</td>
+       <td>Can change frequently to optimize performance.</td>
+      </tr>
+      <tr>
+       <td><b>Directly affects program compatibility.</b></td>
+       <td><b>Does not affect program compatibility.</b></td>
+      </tr>
+     </tbody>
+    </table>
+
+    <!-- QUIZ 1: ARCHITECTURE VS ORGANIZATION -->
+    <div class="quiz-box" id="quiz-box-arch">
+        <h3 style="color: #4338ca;">Section 1 Quiz: Unlock Next Topic</h3>
+        <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 15px;">Questions are randomly generated <strong>strictly</strong> from the Architecture vs Organisation contrast topic. Score <strong>more than 3 marks (&ge; 4/10)</strong> to permanently unlock Section 2.</p>
+        <div id="quiz-container-arch"></div>
+        <button id="submit-btn-arch" onclick="gradeQuiz('arch')">Submit Section 1 Quiz</button>
+        <div class="quiz-feedback" id="feedback-arch"></div>
+    </div>
+   </section>
+
+   <!-- Section 2: Fundamentals of Computer Architecture (LOCKED BY DEFAULT) -->
+   <section id="Funda-of-Computer-Architecture" class="locked-section">
+    <!-- Overlay dynamic UI blocker -->
+    <div class="lock-overlay" id="overlay-funda">
+        <div class="lock-card">
+            <h3 style="margin: 0 0 10px 0; color: #ef4444;">🔒 Section Locked</h3>
+            <p>Score <strong>more than 3 marks</strong> in the Architecture vs Organisation Quiz above to unlock this content.</p>
+        </div>
+    </div>
+
+    <h2>2. Fundamentals of Computer Architecture</h2>
+    <p>Detailed study of basic block diagrams, core performance parameters, subsystems, and execution configurations required for exam reference.</p>
+    
+    <!-- Characteristics Card -->
+    <div class="card note" style="border-left-color: #10b981;">
+        <h4 style="color: #15803d;">Characteristics of a Computer (Exam 2-Mark Guide)</h4>
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top: 10px; margin-bottom: 0;">
+            <div><strong>Speed:</strong> Processes millions of operations per second.</div>
+            <div><strong>Accuracy:</strong> Error-free calculations unless faulty data is input.</div>
+            <div><strong>Automation:</strong> Executes full task sequences without human intervention.</div>
+            <div><strong>Diligence:</strong> Free from monetary fatigue, weakness, or concentration gaps.</div>
+            <div><strong>Reliability:</strong> Gives consistent outputs for identical inputs over time.</div>
+            <div><strong>Versatility:</strong> Performs widely different tasks (e.g., math, media processing).</div>
+            <div><strong>Large Storage:</strong> Stores bulk archives securely across memory systems.</div>
+        </div>
+    </div>
+
+    <!-- Performance Parameters Card -->
+    <div class="grid" style="margin-top: 20px;">
+        <div class="card method" style="border-left-color: #3b82f6;">
+            <h4>System Word Length Parameters</h4>
+            <p>The total count of bits that a CPU processor can manipulate and act upon in a single clock operation cycle:</p>
+            <ul>
+                <li><strong>32-bit architecture:</strong> Processes 32 bits of information simultaneously at once.</li>
+                <li><strong>64-bit architecture:</strong> Processes 64 bits of information simultaneously at once, allowing access to significantly larger RAM spaces.</li>
+            </ul>
+        </div>
+        <div class="card method" style="border-left-color: #f43f5e;">
+            <h4>Processor Clock Speed Metrics</h4>
+            <p>The operating frequency tracking rate of the central processor, measured in <strong>Megahertz (MHz)</strong> or <strong>Gigahertz (GHz)</strong>. Higher baseline clock speeds indicate that more machine instruction loops can be completed per second.</p>
+        </div>
+    </div>
+
+    <p style="margin-top: 25px; margin-bottom: 25px;"><b>Every Computer consists of 5 Basic Functional Units.</b></p>
+
+    <!-- Visual Diagram Replication -->
+    <div class="card" style="background: #ffffff; padding: 30px 20px; border-radius: 18px; margin-bottom: 30px; box-shadow: 0 8px 25px rgba(0,0,0,0.04);">
+        <h3 style="text-align: center; font-size: 1.6rem; margin-top: 0; margin-bottom: 30px; font-family: 'Segoe UI', sans-serif; font-weight: 700;">Functional Units of a Computer</h3>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; align-items: start; text-align: left;">
+            
+            <!-- I/O Pillar -->
+            <div style="border: 2px solid #2563eb; padding: 20px 15px; border-radius: 12px; position: relative; background: #f8fafc;">
+                <div style="border: 2px solid #1e3a8a; padding: 15px; text-align: center; font-weight: bold; font-size: 1.2rem; background: #ffffff; margin-bottom: 20px; border-radius: 6px;">Input</div>
+                <div style="border: 2px solid #1e3a8a; padding: 15px; text-align: center; font-weight: bold; font-size: 1.2rem; background: #ffffff; border-radius: 6px;">Output</div>
+                <div style="text-align: right; font-weight: bold; margin-top: 10px; font-size: 1.1rem; color: #1e3a8a;">I/O</div>
+            </div>
+
+            <!-- Memory Pillar -->
+            <div style="border: 2px solid #4b5563; padding: 20px 15px; border-radius: 12px; background: #ffffff; min-height: 190px; text-align: center;">
+                <div style="font-weight: bold; font-size: 1.3rem; margin-bottom: 15px; color: #1f2937;">Memory</div>
+                <div style="font-family: monospace; color: #4b5563; font-size: 0.95rem; line-height: 1.5;">
+                    Instr1<br>Instr2<br>Instr3<br>Data1<br>Data2
+                </div>
+            </div>
+
+            <!-- Processor Pillar -->
+            <div style="border: 2px solid #059669; padding: 20px 15px; border-radius: 12px; position: relative; background: #f0fdf4;">
+                <div style="border: 2px solid #065f46; padding: 12px; text-align: center; font-weight: bold; font-size: 1.1rem; background: #ffffff; margin-bottom: 20px; border-radius: 6px;">Arithmetic &amp; Logic</div>
+                <div style="border: 2px solid #065f46; padding: 15px; text-align: center; font-weight: bold; font-size: 1.2rem; background: #ffffff; border-radius: 6px;">Control</div>
+                <div style="text-align: right; font-weight: bold; margin-top: 10px; font-size: 1.1rem; color: #065f46;">Processor</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Exam Detail Breakdown with Dropdowns -->
+    <h3>Detailed Breakdown for Exam Reference (Click to Expand)</h3>
+    <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;">
+        
+        <!-- 1. Input Unit Dropdown -->
+        <details class="card method" style="cursor: pointer; background: white;">
+            <summary style="font-weight: bold; font-size: 1.1rem; color: #111827; outline: none; list-style: none; display: flex; align-items: center; justify-content: space-between;">
+                <span><span class="badge" style="background: #e0e7ff; color: #4338ca; margin-bottom:0; margin-right: 10px;">1</span> Input Unit Details</span>
+                <span style="font-size: 0.85rem; color: #6b7280;">▼ Click to view</span>
+            </summary>
+            <div style="margin-top: 15px; cursor: default;">
+                <p><strong>Function:</strong> Accepts data and instructions from the user and converts them into a machine-readable form (binary code) for memory or the CPU.</p>
+                <p><strong>Primary Examples:</strong> Keyboard, Mouse, Scanner.</p>
+            </div>
+        </details>
+
+        <!-- 2. Memory Unit Dropdown -->
+        <details class="card method" style="cursor: pointer; background: white;">
+            <summary style="font-weight: bold; font-size: 1.1rem; color: #111827; outline: none; list-style: none; display: flex; align-items: center; justify-content: space-between;">
+                <span><span class="badge" style="background: #e2e8f0; color: #475569; margin-bottom:0; margin-right: 10px;">2</span> Memory Unit Details</span>
+                <span style="font-size: 0.85rem; color: #6b7280;">▼ Click to view</span>
+            </summary>
+            <div style="margin-top: 15px; cursor: default;">
+                <p><strong>Function:</strong> The memory unit stores instructions and data. The processor reads instructions and reads/writes data from/to the memory during program runtime execution loops.</p>
+                
+                <h4 style="margin: 15px 0 5px; color: #1f2937;">Memory Category Comparisons:</h4>
+                <ul>
+                    <li><strong>Registers:</strong> Smallest, ultra-fast temporary storage inside the CPU chip boundary.</li>
+                    <li><strong>Cache:</strong> Fast static memory buffer minimizing main RAM propagation lookup times.</li>
+                    <li><strong>RAM (Random Access Memory):</strong> Volatile read/write main memory acting as active processing workspace. Clears instantly at power shutdown.</li>
+                    <li><strong>ROM (Read Only Memory):</strong> Non-volatile memory holding static factory initialization routines (BIOS).</li>
+                    <li><strong>Secondary Memory:</strong> High-capacity, permanent, non-volatile auxiliary storage media (SSD/HDD, Pen Drives). Required because primary RAM cannot retain files or system files persistently when power is turned off.</li>
+                </ul>
+            </div>
+        </details>
+
+        <!-- 3. ALU Dropdown -->
+        <details class="card method" style="cursor: pointer; background: white;">
+            <summary style="font-weight: bold; font-size: 1.1rem; color: #111827; outline: none; list-style: none; display: flex; align-items: center; justify-content: space-between;">
+                <span><span class="badge" style="background: #dcfce7; color: #16a34a; margin-bottom:0; margin-right: 10px;">3</span> Arithmetic &amp; Logic Unit (ALU) Details</span>
+                <span style="font-size: 0.85rem; color: #6b7280;">▼ Click to view</span>
+            </summary>
+            <div style="margin-top: 15px; cursor: default;">
+                <p><strong>Function:</strong> The core computing engine room inside the CPU processor subsystem.</p>
+                <ul>
+                    <li><b>Arithmetic Operations:</b> Addition, Subtraction, Multiplication, Division, Increments.</li>
+                    <li><b>Logical Operations:</b> Bitwise operations including AND, OR, NOT, XOR.</li>
+                    <li><b>Comparison Operations:</b> Evaluates data relationships like less than (&lt;), greater than (&gt;), or equal to (==).</li>
+                    <li><b>Shift Operations:</b> Moves bit sequences left (&lt;&lt;) or right (&gt;&gt;) inside data registers.</li>
+                </ul>
+            </div>
+        </details>
+
+        <!-- 4. Control Unit Dropdown -->
+        <details class="card method" style="cursor: pointer; background: white;">
+            <summary style="font-weight: bold; font-size: 1.1rem; color: #111827; outline: none; list-style: none; display: flex; align-items: center; justify-content: space-between;">
+                <span><span class="badge" style="background: #fef3c7; color: #d97706; margin-bottom:0; margin-right: 10px;">4</span> Control Unit (CU) Details</span>
+                <span style="font-size: 0.85rem; color: #6b7280;">▼ Click to view</span>
+            </summary>
+            <div style="margin-top: 15px; cursor: default;">
+                <p><strong>Function:</strong> The orchestrator and supervisor of the computing structure. It does not perform calculation loops itself, but controls instruction sequences.</p>
+                <p><strong>Core CU Responsibilities:</strong></p>
+                <ol style="padding-left: 20px;">
+                    <li><strong>Fetches instructions</strong> sequentially from the primary memory space.</li>
+                    <li><strong>Decodes instructions</strong> to decipher internal micro-operation configuration paths.</li>
+                    <li><strong>Controls execution</strong> pathways inside the processor layout.</li>
+                    <li><strong>Sends control signals</strong> across system blocks to synchronize input, output, and ALU processes.</li>
+                </ol>
+            </div>
+        </details>
+
+        <!-- 5. Output Unit Dropdown -->
+        <details class="card method" style="cursor: pointer; background: white;">
+            <summary style="font-weight: bold; font-size: 1.1rem; color: #111827; outline: none; list-style: none; display: flex; align-items: center; justify-content: space-between;">
+                <span><span class="badge" style="background: #fce7f3; color: #db2777; margin-bottom:0; margin-right: 10px;">5</span> Output Unit Details</span>
+                <span style="font-size: 0.85rem; color: #6b7280;">▼ Click to view</span>
+            </summary>
+            <div style="margin-top: 15px; cursor: default;">
+                <p><strong>Function:</strong> Produces computed computational results and outputs them back to the user environment.</p>
+                <p><strong>Primary Examples:</strong> Monitor, Printer, Speaker.</p>
+            </div>
+        </details>
+        
+    </div>
+
+    <!-- SYSTEM BUS INFRASTRUCTURE -->
+    <div class="card method" style="border-left-color: #0ea5e9; background: rgba(14, 165, 233, 0.02); margin-bottom: 25px;">
+        <h3 style="color: #0369a1; margin-top: 0;">System Bus Infrastructure and Interconnections</h3>
+        <p>Without a bus framework, the CPU can never communicate with Memory, Input, or Output units. A <strong>Bus</strong> is a shared group of parallel wire traces used to connect and communicate data across functional blocks.</p>
+        
+        <div style="background: #e5e7eb; padding: 25px 15px; border-radius: 12px; margin: 20px 0; box-shadow: inset 0 2px 8px rgba(0,0,0,0.05); text-align: center; overflow-x: auto;">
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; max-width: 800px; margin: 0 auto; min-width: 500px;">
+                <div style="border: 2px solid #1e3a8a; background: #fff; padding: 15px 5px; font-weight: bold; color: #1f2937; border-radius: 4px;">Input</div>
+                <div style="border: 2px solid #1e3a8a; background: #fff; padding: 15px 5px; font-weight: bold; color: #1f2937; border-radius: 4px;">Output</div>
+                <div style="border: 2px solid #1e3a8a; background: #fff; padding: 15px 5px; font-weight: bold; color: #1f2937; border-radius: 4px;">Memory</div>
+                <div style="border: 2px solid #1e3a8a; background: #fff; padding: 15px 5px; font-weight: bold; color: #1f2937; border-radius: 4px;">Processor</div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; max-width: 800px; margin: 0 auto; min-width: 500px; height: 45px; position: relative;">
+                <div style="color: #1e3a8a; font-size: 1.5rem; line-height: 45px;">🠟</div>
+                <div style="color: #1e3a8a; font-size: 1.5rem; line-height: 45px;">🠝</div>
+                <div style="color: #1e3a8a; font-size: 1.5rem; line-height: 45px;">🠜🠞</div>
+                <div style="color: #1e3a8a; font-size: 1.5rem; line-height: 45px;">🠜🠞</div>
+            </div>
+
+            <div style="max-width: 830px; margin: 0 auto; min-width: 530px; border-top: 4px double #1e3a8a; border-bottom: 4px double #1e3a8a; background: #1e3a8a; height: 10px; position: relative; display: flex; align-items: center; justify-content: center;">
+                <div style="position: absolute; left: -10px; top: -6px; color: #1e3a8a; font-size: 1.1rem; font-weight: bold;">🠜</div>
+                <span style="background: #e5e7eb; padding: 0 15px; font-weight: bold; font-size: 1.2rem; color: #1f2937; position: relative; top: -2px; font-family: serif; letter-spacing: 1px;">Bus</span>
+                <div style="position: absolute; right: -10px; top: -6px; color: #1e3a8a; font-size: 1.1rem; font-weight: bold;">🠞</div>
+            </div>
+        </div>
+
+        <h4 style="margin: 20px 0 5px; color: #0c4a6e;">The Three Main Bus Types:</h4>
+        <div class="grid" style="margin-bottom: 5px;">
+            <div class="card" style="box-shadow: 0 4px 15px rgba(0,0,0,0.04); border-top: 4px solid #38bdf8;">
+                <h5>1. Data Bus</h5>
+                <p style="font-size: 0.9rem; color: #4b5563;"><b>Bi-directional</b> wire group paths used to transfer active data parameters and opcode values across processing units.</p>
+            </div>
+            <div class="card" style="box-shadow: 0 4px 15px rgba(0,0,0,0.04); border-top: 4px solid #f43f5e;">
+                <h5>2. Address Bus</h5>
+                <p style="font-size: 0.9rem; color: #4b5563;"><b>Uni-directional</b> line channels driven by the CPU to assign target coordinates of physical memory locations.</p>
+            </div>
+            <div class="card" style="box-shadow: 0 4px 15px rgba(0,0,0,0.04); border-top: 4px solid #eab308;">
+                <h5>3. Control Bus</h5>
+                <p style="font-size: 0.9rem; color: #4b5563;">Carries synchronous control commands and status updates (Read/Write triggers, Interrupts) across system units.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- INSTRUCTION CYCLE SECTION -->
+    <div class="card method" style="border-left-color: #8b5cf6; background: rgba(139, 92, 246, 0.02); margin-bottom: 25px;">
+        <h3 style="color: #6d28d9; margin-top: 0;">The Instruction Cycle Phases</h3>
+        <p>Also known as the Machine Cycle, this represents the explicit timeline sequence executed continuously by the processor:</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+            <div style="background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+                <span class="badge" style="background: #ede9fe; color: #6d28d9;">1. Fetch Step</span>
+                <p style="font-size: 0.9rem; margin-top: 5px;">CPU copies the memory address from the <br>Program Counter (PC)<br> onto the Address Bus, then reads the instruction payload from memory into the <br>Instruction Register (IR)<br>.</p>
+            </div>
+
+            <div style="background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+                <span class="badge" style="background: #ede9fe; color: #6d28d9;">2. Decode Step</span>
+                <p style="font-size: 0.9rem; margin-top: 5px;">The <br>Control Unit (CU)<br> interprets the internal opcode fields within the IR to figure out what operation needs to be routed.</p>
+            </div>
+
+            <div style="background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+                <span class="badge" style="background: #ede9fe; color: #6d28d9;">3. Execute Step</span>
+                <p style="font-size: 0.9rem; margin-top: 5px;">The Control Unit triggers hardware lines, routing tasks directly into the <br>ALU<br> logic arrays to perform calculation routines.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- QUIZ 2: FUNDAMENTALS -->
+    <div class="quiz-box" id="quiz-box-funda">
+        <h3 style="color: #4338ca;">Section 2 Quiz: Master Evaluation</h3>
+        <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 15px;">Questions are randomly generated from this topic. Score <strong>more than 3 marks (&ge; 4/10)</strong> to successfully finalize the evaluation.</p>
+        <div id="quiz-container-funda"></div>
+        <button id="submit-btn-funda" onclick="gradeQuiz('funda')">Submit Section 2 Quiz</button>
+        <div class="quiz-feedback" id="feedback-funda"></div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 20px;">
+        <button class="reset-btn" onclick="clearSavedProgress()">Clear Saved Progress &amp; Reset Lock</button>
+    </div>
+   </section>
+
+  </main>
+
+  <script>
+    // Complete question pools loaded with user specification MCQs
+    const rawQuestionPool = {
+        arch: [
+            { q: "Computer architecture mainly deals with ______.", o: ["How the computer is built", "What the computer does", "Manufacturing", "Networking"], a: 1 },
+            { q: "Computer organization deals with ______.", o: ["Programming", "Database", "How the computer performs operations", "Software"], a: 2 },
+            { q: "Which is visible to the programmer?", o: ["Cache", "Bus", "ALU Design", "Architecture"], a: 3 },
+            { q: "Which is hidden from the programmer?", o: ["ISA", "Registers", "Organization", "Data Types"], a: 2 },
+            { q: "ISA stands for", o: ["Intelligent System Access", "Instruction Set Architecture", "Internal System Architecture", "Integrated Software Access"], a: 1 },
+            { q: "Which belongs to Computer Architecture?", o: ["Cache", "Pipeline", "Instruction Set", "Control Signals"], a: 2 },
+            { q: "Which belongs to Computer Organization?", o: ["Addressing Modes", "Data Types", "Control Unit", "Instruction Format"], a: 2 },
+            { q: "Which component performs calculations?", o: ["CU", "RAM", "ALU", "Cache"], a: 2 },
+            { q: "Which unit controls the execution of instructions?", o: ["ALU", "Cache", "Register", "Control Unit"], a: 3 },
+            { q: "Which memory is the fastest?", o: ["SSD", "RAM", "Cache", "Registers"], a: 3 },
+            { q: "Which memory is non-volatile?", o: ["RAM", "Cache", "Registers", "SSD/HDD"], a: 3 },
+            { q: "Which memory loses data when power is OFF?", o: ["SSD", "HDD", "RAM", "DVD"], a: 2 },
+            { q: "Architecture mainly affects", o: ["Cooling", "Hardware wiring", "Program compatibility", "Fan speed"], a: 2 },
+            { q: "Which changes more frequently?", o: ["Architecture", "Organization", "ISA", "Instruction Set"], a: 1 },
+            { q: "Which is NOT part of architecture?", o: ["Registers", "Addressing Modes", "Clock Speed", "Instruction Set"], a: 2 },
+            { q: "Which is NOT part of organization?", o: ["Cache", "Pipeline", "Bus", "Instruction Format"], a: 3 },
+            { q: "CPU consists mainly of", o: ["Monitor and Keyboard", "ALU, CU and Registers", "Mouse and Printer", "SSD and RAM"], a: 1 },
+            { q: "Which step comes first in the instruction cycle?", o: ["Execute", "Decode", "Fetch", "Store"], a: 2 },
+            { q: "Which architecture stores both instructions and data in the same memory?", o: ["Harvard", "Von Neumann", "RISC", "CISC"], a: 1 },
+            { q: "The easiest way to remember Architecture vs Organization is:", o: ["Architecture = Hardware", "Organization = Software", "Architecture = What, Organization = How", "Both are the same"], a: 2 },
+            { q: "Computer Architecture mainly defines:", o: ["Cost", "Performance", "What the computer does", "Network"], a: 2 }
+        ],
+        funda: [
+            { q: "What is Computer Architecture?", o: ["Physical arrangement of hardware", "Design and functionality of a computer system visible to programmers", "Manufacturing process of CPUs", "Programming language design"], a: 1 },
+            { q: "Who is known as the father of Computer Architecture?", o: ["Charles Babbage", "John von Neumann", "Alan Turing", "Bill Gates"], a: 1 },
+            { q: "Which architecture stores both instructions and data in the same memory?", o: ["Harvard Architecture", "Von Neumann Architecture", "Parallel Architecture", "RISC Architecture"], a: 1 },
+            { q: "The brain of the computer is the:", o: ["RAM", "CPU", "Hard Disk", "Motherboard"], a: 1 },
+            { q: "Which component controls all operations of the computer?", o: ["ALU", "Memory Unit", "Control Unit", "Register"], a: 2 },
+            { q: "Which unit performs arithmetic calculations?", o: ["Control Unit", "ALU", "Memory Unit", "Input Unit"], a: 1 },
+            { q: "Which of the following is an input device?", o: ["Monitor", "Printer", "Keyboard", "Speaker"], a: 2 },
+            { q: "Which of the following is an output device?", o: ["Mouse", "Scanner", "Monitor", "Joystick"], a: 2 },
+            { q: "Which memory is temporary?", o: ["ROM", "Hard Disk", "RAM", "DVD"], a: 2 },
+            { q: "Which memory retains data even after power is turned off?", o: ["RAM", "Cache", "ROM", "Register"], a: 2 },
+            { q: "Which register stores the address of the next instruction?", o: ["IR", "MAR", "PC", "MDR"], a: 2 },
+            { q: "Which register stores the current instruction?", o: ["Program Counter", "Instruction Register", "Accumulator", "MAR"], a: 1 },
+            { q: "The fetch-decode-execute cycle is known as the:", o: ["Machine Cycle", "Instruction Cycle", "Memory Cycle", "CPU Cycle"], a: 1 },
+            { q: "Which bus carries data between CPU and memory?", o: ["Address Bus", "Data Bus", "Control Bus", "System Bus"], a: 1 },
+            { q: "Which bus carries control signals?", o: ["Address Bus", "Data Bus", "Control Bus", "Memory Bus"], a: 2 },
+            { q: "Which generation of computers introduced Integrated Circuits (ICs)?", o: ["First Generation", "Second Generation", "Third Generation", "Fourth Generation"], a: 2 },
+            { q: "Which architecture uses separate memories for instructions and data?", o: ["Von Neumann Architecture", "Harvard Architecture", "SIMD Architecture", "MIMD Architecture"], a: 1 },
+            { q: "Which of the following is NOT a functional unit of a computer?", o: ["Input Unit", "Output Unit", "Arithmetic Logic Unit", "Compiler"], a: 3 },
+            { q: "Which memory is the fastest in a computer?", o: ["RAM", "Cache", "Registers", "Hard Disk"], a: 2 },
+            { q: "Which of the following best describes Computer Organization?", o: ["Programming techniques used in computers", "Internal hardware implementation of the architecture", "Development of operating systems", "Design of application software"], a: 1 },
+            { q: "A computer mainly consists of how many functional units?", o: ["3", "4", "5", "6"], a: 2 },
+            { q: "Which is NOT a functional unit?", o: ["Input", "Memory", "CPU", "Internet"], a: 3 },
+            { q: "How many main types of buses are there?", o: ["2", "3", "4", "5"], a: 1 },
+            { q: "Which bus is bi-directional?", o: ["Address Bus", "Data Bus", "Control Bus", "None"], a: 1 },
+            { q: "The second step of the instruction cycle is:", o: ["Fetch", "Decode", "Execute", "Store"], a: 1 },
+            { q: "The third step of the instruction cycle is:", o: ["Decode", "Fetch", "Execute", "Halt"], a: 2 },
+            { q: "The Control Unit mainly handles which task?", o: ["Stores files", "Performs calculations", "Coordinates and controls CPU operations", "Prints output"], a: 2 },
+            { q: "Which type of interrupt is generated by software?", o: ["Hardware Interrupt", "Software Interrupt", "Power Interrupt", "Timer Interrupt"], a: 1 }
+        ]
+    };
+
+    let generatedActiveSets = { arch: [], funda: [] };
+
+    function shuffleArray(array) {
+        let currentIdx = array.length, randomIdx;
+        while (currentIdx !== 0) {
+            randomIdx = Math.floor(Math.random() * currentIdx);
+            currentIdx--;
+            [array[currentIdx], array[randomIdx]] = [array[randomIdx], array[currentIdx]];
+        }
+        return array;
+    }
+
+    function prepareRandomizedQuizSet(type) {
+        let clonedPool = [...rawQuestionPool[type]];
+        shuffleArray(clonedPool);
+        generatedActiveSets[type] = clonedPool.slice(0, 10);
+    }
+
+    function renderShuffledQuizHTML(type) {
+        prepareRandomizedQuizSet(type);
+        const currentQuestions = generatedActiveSets[type];
+        const container = document.getElementById(`quiz-container-${type}`);
+        container.innerHTML = '';
+
+        currentQuestions.forEach((qObj, qIdx) => {
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'quiz-question';
+            questionDiv.innerHTML = `<p><strong>Q${qIdx + 1}:</strong> ${qObj.q}</p>`;
+
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'quiz-options';
+
+            qObj.o.forEach((opt, oIdx) => {
+                optionsDiv.innerHTML += `
+                    <label class="option-wrapper">
+                        <input type="radio" name="question-${type}-${qIdx}" value="${oIdx}">
+                        <span>${opt}</span>
+                    </label>
+                `;
+            });
+
+            questionDiv.appendChild(optionsDiv);
+            container.appendChild(questionDiv);
+        });
+    }
+
+    function gradeQuiz(type) {
+        const currentQuestions = generatedActiveSets[type];
+        let score = 0;
+        let unanswered = false;
+
+        currentQuestions.forEach((qObj, qIdx) => {
+            const selected = document.querySelector(`input[name="question-${type}-${qIdx}"]:checked`);
+            if (!selected) {
+                unanswered = true;
+            } else if (parseInt(selected.value) === qObj.a) {
+                score++;
+            }
+        });
+
+        const feedback = document.getElementById(`feedback-${type}`);
+        feedback.style.display = 'block';
+
+        if (unanswered) {
+            feedback.className = "quiz-feedback fail";
+            feedback.innerHTML = "⚠️ Please answer all 10 questions before submitting.";
+            return;
+        }
+
+        if (score > 3) {
+            feedback.className = "quiz-feedback success";
+            feedback.innerHTML = `Pass! You scored ${score}/10 (More than 3 marks requirement met).`;
+            
+            localStorage.setItem(`quiz_passed_${type}`, 'true');
+            
+            if (type === 'arch') {
+                applyUnlockUIState();
+            } else if (type === 'funda') {
+                document.getElementById('submit-btn-funda').style.display = 'none';
+            }
+        } else {
+            feedback.className = "quiz-feedback fail";
+            feedback.innerHTML = `Failed. You scored ${score}/10. You need more than 3 marks. Shuffling a fresh new question set. Try again!`;
+            renderShuffledQuizHTML(type);
+        }
+    }
+
+    function applyUnlockUIState() {
+        const nextSection = document.getElementById('Funda-of-Computer-Architecture');
+        if (nextSection) nextSection.classList.remove('locked-section');
+        
+        const overlay = document.getElementById('overlay-funda');
+        if (overlay) overlay.style.display = 'none';
+
+        const navFunda = document.getElementById('nav-funda');
+        if (navFunda) {
+            navFunda.classList.remove('disabled-nav');
+            navFunda.innerHTML = "Fundamentals of Architecture";
+            navFunda.setAttribute("href", "#Funda-of-Computer-Architecture");
+        }
+
+        document.getElementById('submit-btn-arch').style.display = 'none';
+        document.getElementById('feedback-arch').className = "quiz-feedback success";
+        document.getElementById('feedback-arch').style.display = 'block';
+        document.getElementById('feedback-arch').innerHTML = "Section Passed &amp; Permanently Unlocked!";
+    }
+
+    function checkLocalStorageStateOnLoad() {
+        const section1Passed = localStorage.getItem('quiz_passed_arch') === 'true';
+        const section2Passed = localStorage.getItem('quiz_passed_funda') === 'true';
+
+        if (section1Passed) {
+            applyUnlockUIState();
+        } else {
+            renderShuffledQuizHTML('arch');
+        }
+
+        if (section2Passed) {
+            document.getElementById('submit-btn-funda').style.display = 'none';
+            const feedbackFunda = document.getElementById('feedback-funda');
+            feedbackFunda.className = "quiz-feedback success";
+            feedbackFunda.style.display = 'block';
+            feedbackFunda.innerHTML = "Module Final Evaluation Complete!";
+        } else {
+            renderShuffledQuizHTML('funda');
+        }
+    }
+
+    function clearSavedProgress() {
+        localStorage.removeItem('quiz_passed_arch');
+        localStorage.removeItem('quiz_passed_funda');
+        alert("Progress tracking data cleared! Reloading page to apply changes...");
+        window.location.reload();
+    }
+
+    window.onload = function() {
+        checkLocalStorageStateOnLoad();
+    };
+  </script>
+ </body>
+</html>
