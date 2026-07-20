@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Computer Architecture &amp; Organization </title>
+    <title>Computer Architecture &amp; Organization Masterclass</title>
     <style>
         * {
             box-sizing: border-box;
@@ -251,6 +251,7 @@
             margin: 15px 0;
         }
 
+        /* RESPONSIVE QUIZ ENGINE GRID INFRASTRUCTURE */
         .quiz-box {
             background: #ffffff;
             border: 2px solid #e2e8f0;
@@ -279,13 +280,24 @@
         .option-wrapper.review-correct { background: #dcfce7 !important; border-color: #10b981 !important; color: #15803d !important; font-weight: 600; }
         .option-wrapper.review-incorrect { background: #fee2e2 !important; border-color: #f87171 !important; color: #b91c1c !important; }
 
+        /* RE-ENGINEERED FLEX/GRID TIMINGS FOR CONGESTION PREVENTIONS */
         .quiz-navigation-controls {
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
             align-items: center;
+            justify-items: center;
+            gap: 15px;
             margin-top: 25px;
-            padding-top: 15px;
+            padding-top: 20px;
             border-top: 1px solid #e5e7eb;
+        }
+
+        .quiz-action-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
         }
 
         .quiz-feedback { padding: 15px; border-radius: 12px; margin-top: 15px; font-weight: 600; display: none; }
@@ -301,16 +313,43 @@
             font-weight: 600;
             cursor: pointer;
             transition: .2s;
+            white-space: nowrap;
         }
         button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(17,24,39,0.15); }
         button:disabled { opacity: 0.3; cursor: not-allowed; transform: none; box-shadow: none; }
 
-        .review-btn { background: #6366f1; display: none; }
+        .review-btn { background: #6366f1; }
         .reset-btn { background: #6b7280; font-size: 0.8rem; padding: 6px 12px; margin-top: 20px; }
+        code { font-family: Consolas, monospace; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
 
         @media(max-width: 992px) {
             .sidebar { position: static; width: 100%; gap: 15px; }
+            .topics-sidebar { max-height: none; }
             header, main { padding-left: 20px !important; }
+        }
+
+        /* SPECIFIC SCREEN FIXES FOR SMALL VIEWPORTS */
+        @media(max-width: 600px) {
+            .quiz-navigation-controls {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .quiz-navigation-controls button {
+                width: 100%;
+                padding: 12px;
+            }
+            #slide-index-txt-core {
+                order: -1;
+                font-size: 0.95rem;
+            }
+            .quiz-action-area {
+                flex-direction: column;
+            }
+            .quiz-action-area button {
+                width: 100%;
+                padding: 12px;
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -320,14 +359,14 @@
     <div class="sidebar">
         <div class="progress-sidebar">
             <div style="font-size: 0.75rem; font-weight: 700; color: #4b5563; letter-spacing: 0.05em; display: flex; justify-content: space-between; align-items: center;">
-                <span>Progress</span>
+                <span>MAP COMPLETION</span>
                 <span id="progress-percent-txt" style="color: #6366f1; font-weight: 800;">40%</span>
             </div>
             <div class="progress-bar-bg">
                 <div class="progress-bar-fill" id="course-progress-fill"></div>
             </div>
             <div style="font-size: 0.75rem; color: #6b7280; margin-top: 8px; font-weight: 500;">
-                Completed: <span id="progress-count-txt" style="color: #111827; font-weight: 700;">4</span> / 10 Completed
+                Completed: <span id="progress-count-txt" style="color: #111827; font-weight: 700;">4</span> / 10 Explored
             </div>
         </div>
 
@@ -425,7 +464,7 @@
                 <h3>In simple words:</h3>
                 <ul>
                     <li><strong>Computer Architecture</strong> = What features the computer provides.</li>
-                    <li><strong>Computer Organization</strong> = How those features are built and work internally.</li>
+                    <li><strong>Computer Organization</strong> = How those features are built and work internally.</td>
                 </ul>
 
                 <div class="summary-box">
@@ -526,7 +565,7 @@
                         <button id="next-btn-core" onclick="shiftQuizSlide(1)">Next</button>
                     </div>
 
-                    <div style="text-align: right; margin-top: 15px;">
+                    <div class="quiz-action-area">
                         <button id="submit-btn-core" style="background: #10b981;" onclick="evaluateQuiz()">Submit Examination</button>
                         <button id="review-btn-core" class="review-btn" onclick="toggleReviewMode()">Review Mistakes</button>
                     </div>
@@ -542,19 +581,19 @@
         <!-- MODULE 5: ISA & REGISTERS (PHASE 2 - INSTRUCTION DESIGN) -->
         <div id="page-isa" class="app-page">
             <section>
-                <h2>5. Instruction Set Architecture (ISA) &amp; Registers</h2>
+                <h2>5. Instruction Set Architecture (ISA) of a CPU – Registers</h2>
                 <p>Instruction Set Architecture (ISA) is the set of instructions that a CPU can understand and execute. It defines how software communicates with the processor.</p>
                 
-                <h3>Registers Overview</h3>
-                <p>Registers are very small, very fast storage locations located right inside the CPU core. They temporarily hold operational data, instructions, and addresses while the CPU is processing them. Registers run significantly faster than standard main memory (RAM).</p>
+                <h3>Registers</h3>
+                <p>Registers are very small, very fast storage locations inside the CPU. They temporarily store data, instructions, and addresses while the CPU is processing them. Registers are faster than main memory (RAM).</p>
 
-                <h3>Common Subsystem Registers</h3>
+                <h3>Common Registers</h3>
                 <ul>
-                    <li><strong>Program Counter (PC):</strong> Stores the memory address of the next sequential instruction to be executed.</li>
-                    <li><strong>Instruction Register (IR):</strong> Holds the exact current instruction that is currently being executed.</li>
-                    <li><strong>Accumulator (ACC):</strong> Stores intermediate operational arithmetic and logical results.</li>
-                    <li><strong>Memory Address Register (MAR):</strong> Holds the address of the target memory location to be read from or written to.</li>
-                    <li><strong>Memory Data Register (MDR):</strong> Holds the actual data payload being read from or committed out to system memory.</li>
+                    <li><strong>Program Counter (PC):</strong> Stores the address of the next instruction to be executed.</li>
+                    <li><strong>Instruction Register (IR):</strong> Holds the current instruction being executed.</li>
+                    <li><strong>Accumulator (ACC):</strong> Stores intermediate arithmetic and logical results.</li>
+                    <li><strong>Memory Address Register (MAR):</strong> Holds the address of the memory location to be accessed.</li>
+                    <li><strong>Memory Data Register (MDR):</strong> Holds the data being read from or written to memory.</li>
                 </ul>
             </section>
         </div>
@@ -563,14 +602,14 @@
         <div id="page-execution" class="app-page">
             <section>
                 <h2>6. Instruction Execution Cycle</h2>
-                <p>The Instruction Execution Cycle is the exact sequence of functional steps the CPU follows repeatedly to run program instructions.</p>
+                <p>The Instruction Execution Cycle is the sequence of steps the CPU follows to execute a program instruction.</p>
                 
-                <h3>Core Multi-Stage Steps</h3>
+                <h3>Steps</h3>
                 <ol style="margin-left: 20px;">
-                    <li><strong>Fetch:</strong> The CPU loads the target instruction from memory, storing it inside the Instruction Register (IR).</li>
-                    <li><strong>Decode:</strong> The Control Unit (CU) parses the instruction parameters to identify what operation needs to be performed.</li>
-                    <li><strong>Execute:</strong> The CPU runs the command operation, instructing the ALU to perform arithmetic or logic calculations if required.</li>
-                    <li><strong>Store (Write Back):</strong> The finalized operation calculation result is committed back into a register or memory location.</li>
+                    <li><strong>1. Fetch:</strong> The CPU fetches the instruction from memory. The instruction is stored in the Instruction Register (IR).</li>
+                    <li><strong>2. Decode:</strong> The Control Unit (CU) decodes the instruction. It determines what operation needs to be performed.</li>
+                    <li><strong>3. Execute:</strong> The CPU executes the instruction. The ALU performs arithmetic or logical operations if needed.</li>
+                    <li><strong>4. Store (Write Back):</strong> The result is stored in a register or memory.</li>
                 </ol>
             </section>
         </div>
@@ -578,38 +617,38 @@
         <!-- MODULE 7: RTL INTERPRETATION -->
         <div id="page-rtl" class="app-page">
             <section>
-                <h2>7. RTL (Register Transfer Language) Interpretation</h2>
-                <p>Register Transfer Language (RTL) is a symbolic, notation-based layout showing how data moves explicitly between registers, memory, and the CPU during execution. It describes register-level micro-operations, not a programming language.</p>
+                <h2>7. RTL (Register Transfer Language) Interpretation of Instructions</h2>
+                <p>Register Transfer Language (RTL) is a symbolic way of showing how data moves between registers, memory, and the CPU while executing an instruction. It describes register-level operations, not a programming language.</p>
                 
-                <h3>Common RTL Examples</h3>
+                <h3>Example RTL Statements</h3>
                 <table>
                     <thead>
                         <tr>
                             <th>Operation Target</th>
                             <th>RTL Syntax Expression</th>
-                            <th>Behavior Meaning</th>
+                            <th>Description</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td>Move data between registers</td>
+                            <td>Move data from Register R1 to Register R2</td>
                             <td><code>R2 &larr; R1</code></td>
-                            <td>Copy the internal contents of R1 directly into R2.</td>
+                            <td>Copy the contents of R1 into R2.</td>
                         </tr>
                         <tr>
-                            <td>Register Addition</td>
+                            <td>Add two registers</td>
                             <td><code>R3 &larr; R1 + R2</code></td>
-                            <td>Add contents of R1 and R2, saving the result into R3.</td>
+                            <td>Add R1 and R2, store the result in R3.</td>
                         </tr>
                         <tr>
                             <td>Load data from memory</td>
                             <td><code>R1 &larr; M[100]</code></td>
-                            <td>Load data stored at memory address position 100 into R1.</td>
+                            <td>Load the data stored at memory address 100 into R1.</td>
                         </tr>
                         <tr>
                             <td>Store data into memory</td>
                             <td><code>M[100] &larr; R1</code></td>
-                            <td>Write the contents of R1 into memory address location 100.</td>
+                            <td>Store the contents of R1 into memory address 100.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -620,37 +659,37 @@
         <div id="page-addressing" class="app-page">
             <section>
                 <h2>8. Addressing Modes</h2>
-                <p>Addressing Modes are the operational methods the CPU uses to locate data operands required to run an instruction.</p>
+                <p>Addressing Modes are the different ways the CPU locates the data (operand) needed to execute an instruction.</p>
                 
-                <h3>Common System Addressing Modes</h3>
+                <h3>Common Addressing Modes</h3>
                 <ul>
-                    <li><strong>Immediate Addressing:</strong> The actual data value is provided directly inside the instruction syntax text.<br>Example: <code>MOV R1, #10</code> (10 is the operational value).</li>
-                    <li><strong>Direct Addressing:</strong> The instruction specifies the literal memory address tracking where data lives.<br>Example: <code>MOV R1, [100]</code> (CPU reads data from memory position 100).</li>
-                    <li><strong>Register Addressing:</strong> The operational operand data is held straight inside a CPU register.<br>Example: <code>MOV R1, R2</code> (Copies contents of R2 over into R1).</li>
-                    <li><strong>Register Indirect Addressing:</strong> A register holds the specific memory address tracking where the operand lives.<br>Example: <code>MOV R1, [R2]</code> (If R2 equals 100, the CPU reads data from memory position 100).</li>
-                    <li><strong>Indexed Addressing:</strong> The effective address calculation is obtained by adding an index register offset value to a base address constant. Perfect for array elements.<br>Example: <code>MOV R1, ARRAY[R2]</code>.</li>
+                    <li><strong>1. Immediate Addressing:</strong> The data is given directly in the instruction.<br>Example: <code>MOV R1, #10</code> (Here, 10 is the actual data).</li>
+                    <li><strong>2. Direct Addressing:</strong> The instruction contains the memory address where the data is stored.<br>Example: <code>MOV R1, [100]</code> (The CPU gets the data from memory location 100).</li>
+                    <li><strong>3. Register Addressing:</strong> The data is stored in a CPU register.<br>Example: <code>MOV R1, R2</code> (Copy the contents of R2 to R1).</li>
+                    <li><strong>4. Register Indirect Addressing:</strong> A register contains the memory address of the data.<br>Example: <code>MOV R1, [R2]</code> (If R2 = 100, the CPU reads the data from memory location 100).</li>
+                    <li><strong>5. Indexed Addressing:</strong> The memory address is obtained by adding an index register to a base address. Used for accessing arrays.<br>Example: <code>MOV R1, ARRAY[R2]</code>.</li>
                 </ul>
             </section>
         </div>
 
-        <!-- MODULE 9: INSTRUCTION TYPES -->
+        <!-- MODULE 9: TYPES OF INSTRUCTIONS -->
         <div id="page-types" class="app-page">
             <section>
                 <h2>9. Types of Instructions</h2>
-                <p>Instructions are commands given to the CPU to perform specific operations. They fall cleanly into several key execution categories:</p>
+                <p>Instructions are commands given to the CPU to perform specific operations.</p>
                 
                 <ul>
-                    <li><strong>Data Transfer Instructions:</strong> Move data entries seamlessly between registers, memory targets, and I/O lines.<br>Examples: <code>MOV</code>, <code>LOAD</code>, <code>STORE</code></li>
-                    <li><strong>Arithmetic Instructions:</strong> Perform classic mathematical computation tracks.<br>Examples: <code>ADD</code>, <code>SUB</code>, <code>MUL</code>, <code>DIV</code></li>
-                    <li><strong>Logical Instructions:</strong> Process bitwise boolean logical evaluations.<br>Examples: <code>AND</code>, <code>OR</code>, <code>NOT</code>, <code>XOR</code></li>
-                    <li><strong>Branch Instructions:</strong> Divert or change the normal linear execution layout of program loops.<br>Examples: <code>JMP</code>, <code>CALL</code>, <code>RETURN</code></li>
-                    <li><strong>Input/Output (I/O) Instructions:</strong> Read raw data inputs or transmit calculations out to peripheral targets.<br>Examples: <code>IN</code>, <code>OUT</code></li>
-                    <li><strong>Shift and Rotate Instructions:</strong> Shift individual bits left or right inside a word structure context.<br>Examples: <code>SHL</code>, <code>SHR</code>, <code>ROL</code>, <code>ROR</code></li>
+                    <li><strong>1. Data Transfer Instructions:</strong> Used to move data between registers, memory, and I/O devices.<br>Examples: <code>MOV</code>, <code>LOAD</code>, <code>STORE</code></li>
+                    <li><strong>2. Arithmetic Instructions:</strong> Used to perform mathematical operations.<br>Examples: <code>ADD</code>, <code>SUB</code>, <code>MUL</code>, <code>DIV</code></li>
+                    <li><strong>3. Logical Instructions:</strong> Used to perform logical operations.<br>Examples: <code>AND</code>, <code>OR</code>, <code>NOT</code>, <code>XOR</code></li>
+                    <li><strong>4. Branch (Control Transfer) Instructions:</strong> Used to change the normal sequence of program execution.<br>Examples: <code>JMP</code>, <code>CALL</code>, <code>RETURN</code></li>
+                    <li><strong>5. Input/Output (I/O) Instructions:</strong> Used to read data from input devices or send data to output devices.<br>Examples: <code>IN</code>, <code>OUT</code></li>
+                    <li><strong>6. Shift and Rotate Instructions:</strong> Used to shift or rotate bits of data.<br>Examples: <code>SHL</code>, <code>SHR</code>, <code>ROL</code>, <code>ROR</code></li>
                 </ul>
             </section>
         </div>
 
-        <!-- MODULE 10: RISC VS CISC (PHASE 3 - ADVANCED TOPOLOGIES) -->
+        <!-- MODULE 10: RISC VS CISC -->
         <div id="page-risc" class="app-page">
             <section>
                 <h2>10. RISC vs CISC Architectural Models</h2>
@@ -722,9 +761,9 @@
         }
 
         function updateCourseProgressWidget() {
-            let unlockedCount = 4; // Phase 1 elements (1-4) open out of box
+            let unlockedCount = 4; 
             if (localStorage.getItem('instruction_phase_unlocked') === 'true') {
-                unlockedCount = 9; // Core Quiz pass opens phase 2 completely (5-9)
+                unlockedCount = 9; 
             }
             
             let calculatedPercentage = Math.round((unlockedCount / TOTAL_TOPICS_COUNT) * 100);
@@ -860,14 +899,12 @@
             const phase2Passed = localStorage.getItem('instruction_phase_unlocked') === 'true';
 
             if (phase2Passed) {
-                // Unshackle the entire Phase 2 branch hub folder wrapper
                 const branchInstruction = document.getElementById('branch-instruction');
                 if (branchInstruction) {
                     branchInstruction.classList.remove('locked-branch');
                     branchInstruction.querySelector('.branch-hub').innerHTML = 'Instruction Design';
                 }
                 
-                // Batch-unlock every leaf inside Phase 2 simultaneously
                 const itemsToUnlock = ['isa', 'execution', 'rtl', 'addressing', 'types'];
                 itemsToUnlock.forEach(id => {
                     const item = document.getElementById(`menu-${id}`);
