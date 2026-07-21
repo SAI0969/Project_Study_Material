@@ -323,6 +323,49 @@
         .byte-cell:last-child { border-right: none; }
         .byte-cell span { display: block; font-size: 0.65rem; color: #64748b; font-weight: normal; margin-top: 2px; }
 
+        /* TOPIC BOTTOM NAVIGATION */
+        .topic-page-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .topic-nav-btn {
+            background: #4f46e5;
+            color: #ffffff;
+            padding: 10px 16px;
+            font-size: 0.88rem;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            min-height: 44px;
+        }
+
+        .topic-nav-btn:hover:not(:disabled) {
+            background: #4338ca;
+            transform: translateY(-1px);
+        }
+
+        .topic-nav-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            background: #9ca3af;
+        }
+
+        .topic-nav-btn.locked-next-btn {
+            background: #6b7280;
+        }
+
         /* QUIZ ENGINE GRID INFRASTRUCTURE */
         .quiz-box {
             background: #ffffff;
@@ -474,6 +517,16 @@
                 font-size: 0.95rem;
                 min-height: 48px;
                 text-align: center;
+            }
+
+            .topic-page-nav {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .topic-nav-btn {
+                width: 100%;
+                min-height: 48px;
             }
         }
     </style>
@@ -689,7 +742,7 @@
                 </ul>
 
                 <!-- PHASE 1 EXAM GATE -->
-                <div class="quiz-box">
+                <div class="quiz-box" id="quiz-box-core">
                     <h3 style="color: #4338ca; margin-top: 0;">🚀 Phase 1: Core Architecture Quiz</h3>
                     <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 15px;">Complete this quiz. Score <strong>4 or more marks (&ge; 4/10)</strong> to unlock the Instruction Design.</p>
                     
@@ -823,7 +876,7 @@
                 </ul>
 
                 <!-- PHASE 2 EXAM GATE -->
-                <div class="quiz-box">
+                <div class="quiz-box" id="quiz-box-instruction">
                     <h3 style="color: #4338ca; margin-top: 0;">🚀 Phase 2: Instruction Design Quiz</h3>
                     <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 15px;">Complete this quiz. Score <strong>4 or more marks (&ge; 4/10)</strong> to unlock the <strong>Advanced Topologies</strong></p>
                     
@@ -953,6 +1006,9 @@
     <script>
         const TOTAL_TOPICS_COUNT = 11; 
 
+        // Ordered topic sequence for prev/next topic navigation
+        const TOPIC_ORDER = ['arch', 'funda', 'neumann', 'cpu', 'isa', 'execution', 'rtl', 'addressing', 'types', 'risc', 'endian'];
+
         // Core Question Pool (Phase 1 Gate)
         const coreQuestionPool = [
             { q: "Computer architecture mainly deals with ______.", o: ["How the hardware elements are wired together", "What features and functionalities the computer provides", "Chip production steps", "Networking protocols"], a: 1 },
@@ -1072,7 +1128,7 @@
         function navigateToPage(targetPageId) {
             const targetMenuItem = document.getElementById(`menu-${targetPageId}`);
             if (targetMenuItem && targetMenuItem.classList.contains('locked-item')) {
-                return; 
+                return false; 
             }
             
             document.querySelectorAll('.app-page').forEach(page => page.classList.remove('active-page'));
@@ -1086,6 +1142,82 @@
             if (sidebar) sidebar.classList.remove('mobile-open');
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            return true;
+        }
+
+        function stepTopic(direction) {
+            const activePage = document.querySelector('.app-page.active-page');
+            if (!activePage) return;
+
+            const currentId = activePage.id.replace('page-', '');
+            const currentIdx = TOPIC_ORDER.indexOf(currentId);
+            if (currentIdx === -1) return;
+
+            const targetIdx = currentIdx + direction;
+            if (targetIdx >= 0 && targetIdx < TOPIC_ORDER.length) {
+                const targetId = TOPIC_ORDER[targetIdx];
+                const targetMenuItem = document.getElementById(`menu-${targetId}`);
+
+                if (targetMenuItem && targetMenuItem.classList.contains('locked-item')) {
+                    // Smooth scroll to the quiz box on current page if user tries to jump past a quiz gate
+                    if (currentId === 'cpu') {
+                        document.getElementById('quiz-box-core').scrollIntoView({ behavior: 'smooth' });
+                    } else if (currentId === 'types') {
+                        document.getElementById('quiz-box-instruction').scrollIntoView({ behavior: 'smooth' });
+                    }
+                } else {
+                    navigateToPage(targetId);
+                }
+            }
+        }
+
+        function injectTopicNavigation() {
+            TOPIC_ORDER.forEach((topicId, idx) => {
+                const pageEl = document.getElementById(`page-${topicId}`);
+                if (!pageEl) return;
+                const sectionEl = pageEl.querySelector('section');
+                if (!sectionEl) return;
+
+                // Remove previous navigation bar if already present
+                const existingNav = sectionEl.querySelector('.topic-page-nav');
+                if (existingNav) existingNav.remove();
+
+                const navDiv = document.createElement('div');
+                navDiv.className = 'topic-page-nav';
+
+                const prevTopicId = idx > 0 ? TOPIC_ORDER[idx - 1] : null;
+                const nextTopicId = idx < TOPIC_ORDER.length - 1 ? TOPIC_ORDER[idx + 1] : null;
+
+                const prevBtn = document.createElement('button');
+                prevBtn.className = 'topic-nav-btn';
+                prevBtn.innerHTML = '← Previous Topic';
+                if (!prevTopicId) {
+                    prevBtn.disabled = true;
+                } else {
+                    prevBtn.onclick = () => stepTopic(-1);
+                }
+
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'topic-nav-btn';
+                
+                if (!nextTopicId) {
+                    nextBtn.innerHTML = 'Course Completed 🎉';
+                    nextBtn.disabled = true;
+                } else {
+                    const isNextLocked = document.getElementById(`menu-${nextTopicId}`)?.classList.contains('locked-item');
+                    if (isNextLocked) {
+                        nextBtn.innerHTML = '🔒 Complete Quiz to Unlock Next';
+                        nextBtn.classList.add('locked-next-btn');
+                    } else {
+                        nextBtn.innerHTML = 'Next Topic →';
+                    }
+                    nextBtn.onclick = () => stepTopic(1);
+                }
+
+                navDiv.appendChild(prevBtn);
+                navDiv.appendChild(nextBtn);
+                sectionEl.appendChild(navDiv);
+            });
         }
 
         function updateCourseProgressWidget() {
@@ -1200,6 +1332,7 @@
                 
                 updateCourseProgressWidget();
                 applyUnlockUIState();
+                injectTopicNavigation(); // Refresh navigation buttons to unlock Next Topic
             } else {
                 feedback.className = "quiz-feedback fail";
                 feedback.innerHTML = `❌ Dynamic validation gate check failed. You scored ${score}/10. A score of 4 or higher is required. Review mistakes or click Retake Quiz to try again with a fresh set.`;
@@ -1311,6 +1444,7 @@
             renderQuizHTML('core');
             renderQuizHTML('instruction');
             updateCourseProgressWidget();
+            injectTopicNavigation();
         }
 
         function clearSavedProgress() {
