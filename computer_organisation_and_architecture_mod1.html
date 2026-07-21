@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Computer Architecture &amp; Organization</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 50%, #f8fafc 100%);
+            min-height: 100vh;
+        }
+
+        .wrap {
+            max-width: 1200px;
+            margin: auto;
+            position: relative;
+        }
+
+        /* MOBILE TOP BAR */
+        .mobile-top-bar {
+            display: none;
+            position: sticky;
+            top: 0;
+            z-index: 1100;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 12px 16px;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .mobile-nav-toggle {
+            background: #4f46e5;
+            color: #ffffff;
+            padding: 8px 14px;
+            font-size: 0.85rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed;
+            top: 25px;
+            left: 25px;
+            z-index: 1000;
+            width: 290px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .progress-sidebar, .topics-sidebar {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px -2px rgba(148, 163, 184, 0.05);
+        }
+
+        .topics-sidebar {
+            max-height: calc(100vh - 160px);
+            overflow-y: auto;
+        }
+
+        .mindmap-branch {
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .branch-hub {
+            display: flex;
+            align-items: center;
+            font-size: 0.75rem;
+            color: #4f46e5;
+            background: #f5f3ff;
+            border: 1px solid #ddd6fe;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+            min-height: 40px;
+        }
+        
+        .branch-hub::before {
+            content: '▼';
+            margin-right: 8px;
+            font-size: 0.65rem;
+            transition: transform 0.2s ease;
+        }
+
+        .mindmap-branch.collapsed .branch-hub::before {
+            transform: rotate(-90deg);
+        }
+
+        .branch-leaves {
+            margin-left: 18px;
+            padding-left: 14px;
+            border-left: 2px dashed #c7d2fe;
+            position: relative;
+            margin-top: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .mindmap-branch.collapsed .branch-leaves {
+            display: none;
+        }
+
+        .topic-menu-item {
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding: 10px 12px;
+            color: #64748b;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            font-weight: 550;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 40px;
+        }
+
+        .topic-menu-item::before {
+            content: '';
+            position: absolute;
+            left: -14px;
+            top: 50%;
+            width: 10px;
+            height: 2px;
+            background-color: #c7d2fe;
+        }
+
+        .status-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            margin-right: 8px;
+            display: inline-block;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .topic-menu-item:not(.locked-item):hover {
+            background: #f1f5f9;
+            color: #1e293b;
+            transform: translateX(2px);
+        }
+
+        .topic-menu-item:not(.locked-item):hover .status-indicator {
+            background: #6366f1;
+            transform: scale(1.3);
+        }
+
+        .topic-menu-item.active-item {
+            background: linear-gradient(90deg, #eef2ff 0%, #e0e7ff 100%);
+            color: #4f46e5;
+            font-weight: 650;
+            box-shadow: 0 4px 12px -3px rgba(99, 102, 241, 0.2);
+        }
+
+        .topic-menu-item.active-item .status-indicator {
+            background: #4f46e5;
+            box-shadow: 0 0 6px #4f46e5;
+        }
+
+        .topic-menu-item.locked-item {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f3f4f6;
+            color: #94a3b8;
+        }
+
+        .mindmap-branch.locked-branch .branch-hub {
+            background: #f3f4f6;
+            border-color: #e5e7eb;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .mindmap-branch.locked-branch .branch-leaves {
+            display: none !important;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            background: #e5e7eb;
+            height: 10px;
+            border-radius: 999px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 36%;
+            background: linear-gradient(90deg, #6366f1, #10b981);
+            border-radius: 999px;
+            transition: width 0.5s ease;
+        }
+
+        header {
+            padding: 40px 20px 20px 340px; 
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: clamp(1.5rem, 4vw, 2.4rem);
+            color: #111827;
+            font-weight: 800;
+        }
+
+        main {
+            padding: 20px 20px 60px 340px; 
+        }
+
+        .app-page { display: none; }
+        .app-page.active-page { display: block; }
+
+        section {
+            background: rgba(255, 255, 255, .85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, .5);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,.03);
+        }
+
+        h2 {
+            margin-bottom: 16px;
+            font-size: 1.4rem;
+            color: #111827;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 8px;
+        }
+
+        h3 { margin: 20px 0 10px; color: #111827; font-size: 1.15rem; }
+        p { margin-bottom: 12px; }
+        ul { margin-left: 20px; margin-bottom: 15px; }
+        li { margin-bottom: 6px; }
+
+        /* RESPONSIVE TABLE WRAPPER */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 16px 0;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #ffffff;
+            min-width: 500px;
+        }
+        th, td { padding: 12px 14px; border: 1px solid #e5e7eb; text-align: left; font-size: 0.9rem; }
+        th { background: #f8fafc; font-weight: 600; }
+
+        .summary-box {
+            background: #f0fdf4;
+            border-left: 4px solid #10b981;
+            padding: 14px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-size: 0.95rem;
+        }
+
+        .endian-box {
+            display: flex;
+            gap: 16px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .endian-card {
+            flex: 1;
+            min-width: 260px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+
+        .byte-cells {
+            display: flex;
+            margin-top: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        .byte-cell {
+            flex: 1;
+            padding: 8px 4px;
+            text-align: center;
+            border-right: 1px solid #cbd5e1;
+            background: #f8fafc;
+            min-width: 60px;
+            font-size: 0.85rem;
+        }
+        .byte-cell:last-child { border-right: none; }
+        .byte-cell span { display: block; font-size: 0.65rem; color: #64748b; font-weight: normal; margin-top: 2px; }
+
+        /* TOPIC BOTTOM NAVIGATION */
+        .topic-page-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .topic-nav-btn {
+            background: #4f46e5;
+            color: #ffffff;
+            padding: 10px 16px;
+            font-size: 0.88rem;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            min-height: 44px;
+        }
+
+        .topic-nav-btn:hover:not(:disabled) {
+            background: #4338ca;
+            transform: translateY(-1px);
+        }
+
+        .topic-nav-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            background: #9ca3af;
+        }
+
+        .topic-nav-btn.locked-next-btn {
+            background: #6b7280;
+        }
+
+        /* QUIZ ENGINE GRID INFRASTRUCTURE */
+        .quiz-box {
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .quiz-slide { display: none; }
+        .quiz-slide.active-slide { display: block; }
+        .quiz-options { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 15px; }
+
+        .option-wrapper {
+            display: flex;
+            align-items: center;
+            padding: 12px 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            min-height: 48px;
+            font-size: 0.92rem;
+        }
+        .option-wrapper:hover { background: #f1f5f9; }
+        .option-wrapper input { margin-right: 12px; flex-shrink: 0; width: 18px; height: 18px; }
+
+        .option-wrapper.review-correct { background: #dcfce7 !important; border-color: #10b981 !important; color: #15803d !important; font-weight: 600; }
+        .option-wrapper.review-incorrect { background: #fee2e2 !important; border-color: #f87171 !important; color: #b91c1c !important; }
+
+        .quiz-navigation-controls {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            justify-items: center;
+            gap: 12px;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .quiz-action-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .quiz-feedback { padding: 14px; border-radius: 10px; margin-top: 15px; font-weight: 600; font-size: 0.9rem; display: none; }
+        .quiz-feedback.success { background: #dcfce7; color: #16a34a; }
+        .quiz-feedback.fail { background: #fee2e2; color: #dc2626; }
+
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            background: #111827;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .2s;
+            white-space: nowrap;
+            min-height: 42px;
+            font-size: 0.9rem;
+        }
+        button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(17,24,39,0.15); }
+        button:disabled { opacity: 0.3; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .review-btn { background: #6366f1; }
+        .reset-btn { background: #6b7280; font-size: 0.8rem; padding: 8px 14px; margin-top: 20px; }
+        code { font-family: Consolas, monospace; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 0.88em; }
+
+        /* RESPONSIVE MEDIA QUERIES */
+        @media (max-width: 992px) {
+            .mobile-top-bar {
+                display: flex;
+            }
+
+            .sidebar {
+                position: fixed;
+                top: 57px;
+                left: 0;
+                right: 0;
+                width: 100%;
+                height: calc(100vh - 57px);
+                background: rgba(248, 250, 252, 0.98);
+                backdrop-filter: blur(12px);
+                padding: 16px;
+                overflow-y: auto;
+                display: none;
+                z-index: 1050;
+            }
+
+            .sidebar.mobile-open {
+                display: flex;
+            }
+
+            .topics-sidebar {
+                max-height: none;
+            }
+
+            header {
+                padding: 24px 16px 12px 16px;
+            }
+
+            main {
+                padding: 12px 16px 40px 16px;
+            }
+
+            section {
+                padding: 18px;
+                border-radius: 16px;
+            }
+        }
+
+        /* MOBILE BUTTON & QUIZ NAVIGATION OPTIMIZATION */
+        @media (max-width: 600px) {
+            .quiz-navigation-controls {
+                grid-template-columns: 1fr auto 1fr;
+                gap: 8px;
+                align-items: center;
+                padding-top: 14px;
+            }
+            
+            .quiz-navigation-controls button {
+                width: 100%;
+                padding: 10px 8px;
+                font-size: 0.85rem;
+            }
+
+            #slide-index-txt-core,
+            #slide-index-txt-instruction {
+                font-size: 0.78rem !important;
+                text-align: center;
+                white-space: nowrap;
+            }
+
+            .quiz-action-area {
+                flex-direction: column;
+                gap: 10px;
+                margin-top: 14px;
+            }
+
+            .quiz-action-area button {
+                width: 100%;
+                padding: 12px;
+                font-size: 0.95rem;
+                min-height: 48px;
+                text-align: center;
+            }
+
+            .topic-page-nav {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .topic-nav-btn {
+                width: 100%;
+                min-height: 48px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- MOBILE STICKY NAVIGATION BAR -->
+    <div class="mobile-top-bar">
+        <span style="font-weight: 700; font-size: 0.9rem; color: #111827;">Computer Architecture</span>
+        <button class="mobile-nav-toggle" onclick="toggleMobileMenu()">🗺️ Mind Map</button>
+    </div>
+
+    <!-- NOTEBOOKLM MAP SIDEBAR INFRASTRUCTURE -->
+    <div class="sidebar" id="app-sidebar">
+        <div class="progress-sidebar">
+            <div style="font-size: 0.75rem; font-weight: 700; color: #4b5563; letter-spacing: 0.05em; display: flex; justify-content: space-between; align-items: center;">
+                <span>MAP COMPLETION</span>
+                <span id="progress-percent-txt" style="color: #6366f1; font-weight: 800;">36%</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="course-progress-fill"></div>
+            </div>
+            <div style="font-size: 0.75rem; color: #6b7280; margin-top: 8px; font-weight: 500;">
+                Completed: <span id="progress-count-txt" style="color: #111827; font-weight: 700;">4</span> / 11 Covered
+            </div>
+        </div>
+
+        <div class="topics-sidebar">
+            <!-- Branch Hub 1 (Core Architecture) -->
+            <div class="mindmap-branch" id="branch-core">
+                <div class="branch-hub" onclick="toggleBranch('core')">Core Architecture</div>
+                <div class="branch-leaves">
+                    <a href="#" class="topic-menu-item active-item" id="menu-arch" onclick="navigateToPage('arch')">
+                        <span class="status-indicator"></span> 1. Arch vs Org
+                    </a>
+                    <a href="#" class="topic-menu-item" id="menu-funda" onclick="navigateToPage('funda')">
+                        <span class="status-indicator"></span> 2. COA Fundamentals
+                    </a>
+                    <a href="#" class="topic-menu-item" id="menu-neumann" onclick="navigateToPage('neumann')">
+                        <span class="status-indicator"></span> 3. von Neumann
+                    </a>
+                    <a href="#" class="topic-menu-item" id="menu-cpu" onclick="navigateToPage('cpu')">
+                        <span class="status-indicator"></span> 4. CPU Subsystems
+                    </a>
+                </div>
+            </div>
+
+            <!-- Branch Hub 2 (Instruction Design) -->
+            <div class="mindmap-branch locked-branch" id="branch-instruction">
+                <div class="branch-hub" onclick="toggleBranch('instruction')">🔒 Instruction Design</div>
+                <div class="branch-leaves">
+                    <a href="#" class="topic-menu-item locked-item" id="menu-isa" onclick="navigateToPage('isa')">
+                        <span class="status-indicator"></span> 🔒 5. ISA &amp; Registers
+                    </a>
+                    <a href="#" class="topic-menu-item locked-item" id="menu-execution" onclick="navigateToPage('execution')">
+                        <span class="status-indicator"></span> 🔒 6. Execution Cycles
+                    </a>
+                    <a href="#" class="topic-menu-item locked-item" id="menu-rtl" onclick="navigateToPage('rtl')">
+                        <span class="status-indicator"></span> 🔒 7. RTL Interpretation
+                    </a>
+                    <a href="#" class="topic-menu-item locked-item" id="menu-addressing" onclick="navigateToPage('addressing')">
+                        <span class="status-indicator"></span> 🔒 8. Addressing Modes
+                    </a>
+                    <a href="#" class="topic-menu-item locked-item" id="menu-types" onclick="navigateToPage('types')">
+                        <span class="status-indicator"></span> 🔒 9. Types of Instructions
+                    </a>
+                </div>
+            </div>
+
+            <!-- Branch Hub 3 (Advanced Topologies) -->
+            <div class="mindmap-branch locked-branch" id="branch-advanced">
+                <div class="branch-hub" onclick="toggleBranch('advanced')">🔒 Advanced Topologies</div>
+                <div class="branch-leaves">
+                    <a href="#" class="topic-menu-item locked-item" id="menu-risc" onclick="navigateToPage('risc')">
+                        <span class="status-indicator"></span> 🔒 10. RISC vs CISC
+                    </a>
+                    <a href="#" class="topic-menu-item locked-item" id="menu-endian" onclick="navigateToPage('endian')">
+                        <span class="status-indicator"></span> 🔒 11. Endianness Representation
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <div class="wrap">
+            <h1>Computer Architecture &amp; Organization</h1>
+        </div>
+    </header>
+    
+    <main class="wrap">
+        
+        <!-- MODULE 1: ARCHITECTURE VS ORGANIZATION -->
+        <div id="page-arch" class="app-page active-page">
+            <section>
+                <h2>1. Computer Architecture vs. Computer Organization</h2>
+                <p>Here is a clear look at how the conceptual layout workspace contrasts with the physical design implementation layers:</p>
+                
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Computer Architecture</th>
+                                <th>Computer Organization</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Refers to <strong>what</strong> the computer does.</td>
+                                <td>Refers to <strong>how</strong> the computer does it.</td>
+                            </tr>
+                            <tr>
+                                <td>It is the design and functionality visible to the programmer.</td>
+                                <td>It is the internal implementation of the hardware.</td>
+                            </tr>
+                            <tr>
+                                <td>Examples: Instruction set, data types, addressing modes.</td>
+                                <td>Examples: Control unit, memory organization, ALU, buses.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>In simple words:</h3>
+                <ul>
+                    <li><strong>Computer Architecture</strong> = What features the computer provides.</li>
+                    <li><strong>Computer Organization</strong> = How those features are built and work internally.</li>
+                </ul>
+
+                <div class="summary-box">
+                    <strong>Easy way to remember:</strong><br>
+                    Architecture = <b>What</b> &nbsp;|&nbsp; Organization = <b>How</b>
+                </div>
+            </section>
+        </div>
+
+        <!-- MODULE 2: FUNDAMENTALS -->
+        <div id="page-funda" class="app-page">
+            <section>
+                <h2>2. Fundamentals of Computer Architecture</h2>
+                <p>Computer Architecture is the basic design and structure of a computer system. It defines what the computer can do and how the programmer interacts with it.</p>
+                
+                <p>The main fundamentals are:</p>
+                <ul>
+                    <li><strong>Instruction Set Architecture (ISA):</strong> The set of instructions a processor can execute.</li>
+                    <li><strong>Data Representation:</strong> How data such as numbers, characters, and symbols are stored in the computer.</li>
+                    <li><strong>Memory System:</strong> How the computer stores data and instructions (e.g., registers, cache, RAM).</li>
+                    <li><strong>Input and Output (I/O):</strong> How the computer communicates with peripheral hardware devices like keyboards and monitors.</li>
+                    <li><strong>Processor (CPU):</strong> The primary processing engine that executes instructions and handles mathematical operations.</li>
+                    <li><strong>Addressing Modes:</strong> The different algorithmic ways the CPU can calculate memory addresses to read or write data.</li>
+                </ul>
+            </section>
+        </div>
+
+        <!-- MODULE 3: VON NEUMANN -->
+        <div id="page-neumann" class="app-page">
+            <section>
+                <h2>3. Organization of Von Neumann Machine</h2>
+                <p>The Von Neumann Machine is a milestone framework layout configuration where both software instructions and operational raw data co-exist inside the same unified memory space.</p>
+                
+                <h3>Main Components</h3>
+                <ul>
+                    <li><strong>Memory Unit:</strong> Stores both program instructions and data.</li>
+                    <li><strong>Control Unit (CU):</strong> Controls and coordinates all operations of the computer. It handles fetching and decoding.</li>
+                    <li><strong>Arithmetic Logic Unit (ALU):</strong> Performs math calculations (+, -, etc.) and logical comparisons (AND, OR, NOT).</li>
+                    <li><strong>Input Unit:</strong> Accepts incoming operational instructions and data from the user.</li>
+                    <li><strong>Output Unit:</strong> Processes and renders target calculation outputs back to a view screen or file.</li>
+                </ul>
+
+                <h3>Working (Basic Steps)</h3>
+                <ol style="margin-left: 20px; margin-bottom: 20px;">
+                    <li>Input data and instructions are loaded into the system.</li>
+                    <li>The system stores them inside the unified memory framework.</li>
+                    <li>The CPU fetches the designated targeted instruction from memory.</li>
+                    <li>The Control Unit decodes the command parameters.</li>
+                    <li>The ALU executes the operation if arithmetic steps are needed.</li>
+                    <li>The final result is written back to memory or directed to an output system.</li>
+                </ol>
+            </section>
+        </div>
+
+        <!-- MODULE 4: CPU SUBSYSTEMS -->
+        <div id="page-cpu" class="app-page">
+            <section>
+                <h2>4. CPU Subsystems &amp; Frameworks</h2>
+                
+                <h3>CPU (Central Processing Unit)</h3>
+                <ul>
+                    <li>The CPU operates as the main operational brain of the computer system.</li>
+                    <li>It executes system instructions and manages processing pipelines.</li>
+                    <li>It consists primary of the Control Unit (CU) and the Arithmetic Logic Unit (ALU).</li>
+                </ul>
+
+                <h3>Memory Systems</h3>
+                <ul>
+                    <li>Memory acts as the staging unit that stores software data and program instructions.</li>
+                    <li>The CPU reads data from memory blocks and commits calculation results back out to them.</li>
+                    <li>Primary system layout models include standard RAM and high-speed local Cache lines.</li>
+                </ul>
+
+                <h3>Input-Output (I/O) Subsystems</h3>
+                <ul>
+                    <li>Input hardware units send data vectors directly into the computer system workspace (e.g., Keyboards, Mice, Scanners).</li>
+                    <li>Output hardware units present processed validation structures to users (e.g., Monitors, Printers).</li>
+                </ul>
+
+                <h3>Control Unit (CU) Operations</h3>
+                <ul>
+                    <li>The Control Unit orchestrates and structures execution pipelines across the machine context.</li>
+                    <li>It loads active software instructions straight out of volatile memory.</li>
+                    <li>It parses and evaluates the operational signals.</li>
+                    <li>It systematically directs the ALU, memory lines, and external I/O units to process actions.</li>
+                </ul>
+
+                <!-- PHASE 1 EXAM GATE -->
+                <div class="quiz-box" id="quiz-box-core">
+                    <h3 style="color: #4338ca; margin-top: 0;">🚀 Phase 1: Core Architecture Quiz</h3>
+                    <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 15px;">Complete this quiz. Score <strong>4 or more marks (&ge; 4/10)</strong> to unlock the Instruction Design.</p>
+                    
+                    <div id="slider-content-area-core"></div>
+
+                    <div class="quiz-navigation-controls">
+                        <button id="prev-btn-core" onclick="shiftQuizSlide('core', -1)">Previous</button>
+                        <span style="font-weight: 600; color: #4b5563; font-size: 0.85rem;" id="slide-index-txt-core">Question 1 / 10</span>
+                        <button id="next-btn-core" onclick="shiftQuizSlide('core', 1)">Next</button>
+                    </div>
+
+                    <div class="quiz-action-area">
+                        <button id="submit-btn-core" style="background: #10b981;" onclick="evaluateQuiz('core')">Submit Examination</button>
+                        <button id="retake-btn-core" style="background: #f59e0b; display: none;" onclick="retakeQuiz('core')">🔄 Retake Quiz</button>
+                        <button id="review-btn-core" class="review-btn" onclick="toggleReviewMode('core')">Review Mistakes</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback-core"></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- MODULE 5: ISA & REGISTERS -->
+        <div id="page-isa" class="app-page">
+            <section>
+                <h2>5. Instruction Set Architecture (ISA) of a CPU – Registers</h2>
+                <p>Instruction Set Architecture (ISA) is the set of instructions that a CPU can understand and execute. It defines how software communicates with the processor.</p>
+                
+                <h3>Registers</h3>
+                <p>Registers are very small, very fast storage locations inside the CPU. They temporarily store data, instructions, and addresses while the CPU is processing them. Registers are faster than main memory (RAM).</p>
+
+                <h3>Common Registers</h3>
+                <ul>
+                    <li><strong>Program Counter (PC):</strong> Stores the address of the next instruction to be executed.</li>
+                    <li><strong>Instruction Register (IR):</strong> Holds the current instruction being executed.</li>
+                    <li><strong>Accumulator (ACC):</strong> Stores intermediate arithmetic and logical results.</li>
+                    <li><strong>Memory Address Register (MAR):</strong> Holds the address of the memory location to be accessed.</li>
+                    <li><strong>Memory Data Register (MDR):</strong> Holds the data being read from or written to memory.</li>
+                </ul>
+            </section>
+        </div>
+
+        <!-- MODULE 6: EXECUTION CYCLES -->
+        <div id="page-execution" class="app-page">
+            <section>
+                <h2>6. Instruction Execution Cycle</h2>
+                <p>The Instruction Execution Cycle is the sequence of steps the CPU follows to execute a program instruction.</p>
+                
+                <h3>Steps</h3>
+                <ol style="margin-left: 20px;">
+                    <li><strong>1. Fetch:</strong> The CPU fetches the instruction from memory. The instruction is stored in the Instruction Register (IR).</li>
+                    <li><strong>2. Decode:</strong> The Control Unit (CU) decodes the instruction. It determines what operation needs to be performed.</li>
+                    <li><strong>3. Execute:</strong> The CPU executes the instruction. The ALU performs arithmetic or logical operations if needed.</li>
+                    <li><strong>4. Store (Write Back):</strong> The result is stored in a register or memory.</li>
+                </ol>
+            </section>
+        </div>
+
+        <!-- MODULE 7: RTL INTERPRETATION -->
+        <div id="page-rtl" class="app-page">
+            <section>
+                <h2>7. RTL (Register Transfer Language) Interpretation of Instructions</h2>
+                <p>Register Transfer Language (RTL) is a symbolic way of showing how data moves between registers, memory, and the CPU while executing an instruction. It describes register-level operations, not a programming language.</p>
+                
+                <h3>Example RTL Statements</h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Operation Target</th>
+                                <th>RTL Syntax Expression</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Move data from Register R1 to Register R2</td>
+                                <td><code>R2 &larr; R1</code></td>
+                                <td>Copy the contents of R1 into R2.</td>
+                            </tr>
+                            <tr>
+                                <td>Add two registers</td>
+                                <td><code>R3 &larr; R1 + R2</code></td>
+                                <td>Add R1 and R2, store the result in R3.</td>
+                            </tr>
+                            <tr>
+                                <td>Load data from memory</td>
+                                <td><code>R1 &larr; M[100]</code></td>
+                                <td>Load the data stored at memory address 100 into R1.</td>
+                            </tr>
+                            <tr>
+                                <td>Store data into memory</td>
+                                <td><code>M[100] &larr; R1</code></td>
+                                <td>Store the contents of R1 into memory address 100.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- MODULE 8: ADDRESSING MODES -->
+        <div id="page-addressing" class="app-page">
+            <section>
+                <h2>8. Addressing Modes</h2>
+                <p>Addressing Modes are the different ways the CPU locates the data (operand) needed to execute an instruction.</p>
+                
+                <h3>Common Addressing Modes</h3>
+                <ul>
+                    <li><strong>1. Immediate Addressing:</strong> The data is given directly in the instruction.<br>Example: <code>MOV R1, #10</code> (Here, 10 is the actual data).</li>
+                    <li><strong>2. Direct Addressing:</strong> The instruction contains the memory address where the data is stored.<br>Example: <code>MOV R1, [100]</code> (The CPU gets the data from memory location 100).</li>
+                    <li><strong>3. Register Addressing:</strong> The data is stored in a CPU register.<br>Example: <code>MOV R1, R2</code> (Copy the contents of R2 to R1).</li>
+                    <li><strong>4. Register Indirect Addressing:</strong> A register contains the memory address of the data.<br>Example: <code>MOV R1, [R2]</code> (If R2 = 100, the CPU reads the data from memory location 100).</li>
+                    <li><strong>5. Indexed Addressing:</strong> The memory address is obtained by adding an index register to a base address. Used for accessing arrays.<br>Example: <code>MOV R1, ARRAY[R2]</code>.</li>
+                </ul>
+            </section>
+        </div>
+
+        <!-- MODULE 9: TYPES OF INSTRUCTIONS -->
+        <div id="page-types" class="app-page">
+            <section>
+                <h2>9. Types of Instructions</h2>
+                <p>Instructions are commands given to the CPU to perform specific operations.</p>
+                
+                <ul>
+                    <li><strong>1. Data Transfer Instructions:</strong> Used to move data between registers, memory, and I/O devices.<br>Examples: <code>MOV</code>, <code>LOAD</code>, <code>STORE</code></li>
+                    <li><strong>2. Arithmetic Instructions:</strong> Used to perform mathematical operations.<br>Examples: <code>ADD</code>, <code>SUB</code>, <code>MUL</code>, <code>DIV</code></li>
+                    <li><strong>3. Logical Instructions:</strong> Used to perform logical operations.<br>Examples: <code>AND</code>, <code>OR</code>, <code>NOT</code>, <code>XOR</code></li>
+                    <li><strong>4. Branch (Control Transfer) Instructions:</strong> Used to change the normal sequence of program execution.<br>Examples: <code>JMP</code>, <code>CALL</code>, <code>RETURN</code></li>
+                    <li><strong>5. Input/Output (I/O) Instructions:</strong> Used to read data from input devices or send data to output devices.<br>Examples: <code>IN</code>, <code>OUT</code></li>
+                    <li><strong>6. Shift and Rotate Instructions:</strong> Used to shift or rotate bits of data.<br>Examples: <code>SHL</code>, <code>SHR</code>, <code>ROL</code>, <code>ROR</code></li>
+                </ul>
+
+                <!-- PHASE 2 EXAM GATE -->
+                <div class="quiz-box" id="quiz-box-instruction">
+                    <h3 style="color: #4338ca; margin-top: 0;">🚀 Phase 2: Instruction Design Quiz</h3>
+                    <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 15px;">Complete this quiz. Score <strong>4 or more marks (&ge; 4/10)</strong> to unlock the <strong>Advanced Topologies</strong></p>
+                    
+                    <div id="slider-content-area-instruction"></div>
+
+                    <div class="quiz-navigation-controls">
+                        <button id="prev-btn-instruction" onclick="shiftQuizSlide('instruction', -1)">Previous</button>
+                        <span style="font-weight: 600; color: #4b5563; font-size: 0.85rem;" id="slide-index-txt-instruction">Question 1 / 10</span>
+                        <button id="next-btn-instruction" onclick="shiftQuizSlide('instruction', 1)">Next</button>
+                    </div>
+
+                    <div class="quiz-action-area">
+                        <button id="submit-btn-instruction" style="background: #10b981;" onclick="evaluateQuiz('instruction')">Submit Examination</button>
+                        <button id="retake-btn-instruction" style="background: #f59e0b; display: none;" onclick="retakeQuiz('instruction')">🔄 Retake Quiz</button>
+                        <button id="review-btn-instruction" class="review-btn" onclick="toggleReviewMode('instruction')">Review Mistakes</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback-instruction"></div>
+                </div>
+
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="reset-btn" onclick="clearSavedProgress()">Clear Saved Progress &amp; Reset Map Locks</button>
+                </div>
+            </section>
+        </div>
+
+        <!-- MODULE 10: RISC VS CISC -->
+        <div id="page-risc" class="app-page">
+            <section>
+                <h2>10. RISC vs CISC Architectural Models</h2>
+                <p>Processor instruction set architectures generally fall into two broad design paradigms depending on whether they prioritize hardware simplicity or software compactness.</p>
+                
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>RISC (Reduced Instruction Set Computer)</th>
+                                <th>CISC (Complex Instruction Set Computer)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Instruction Size</strong></td>
+                                <td>Simple, fixed size (e.g., 32-bit).</td>
+                                <td>Complex, variable size (1 to 15 bytes).</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Execution Time</strong></td>
+                                <td>1 clock cycle per instruction.</td>
+                                <td>Multiple clock cycles per instruction.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Memory Access</strong></td>
+                                <td>LOAD/STORE architecture only (Operations happen in registers).</td>
+                                <td>Direct memory operands supported in arithmetic operations.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Register Count</strong></td>
+                                <td>Large number of general-purpose registers.</td>
+                                <td>Fewer general-purpose registers.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Addressing Modes</strong></td>
+                                <td>Few, simple addressing modes.</td>
+                                <td>Many, complex addressing modes.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Pipelining</strong></td>
+                                <td>Highly optimized and easy to pipeline.</td>
+                                <td>Difficult to pipeline efficiently.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Examples</strong></td>
+                                <td>ARM, MIPS, RISC-V, Apple Silicon (M-series).</td>
+                                <td>x86, x86-64 (Intel Core, AMD Ryzen).</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- MODULE 11: ENDIANNESS REPRESENTATION -->
+        <div id="page-endian" class="app-page">
+            <section>
+                <h2>11. Byte Ordering: Big-Endian vs Little-Endian</h2>
+                <p>When multi-byte data types (like 32-bit integers) are stored in computer memory, <strong>Endianness</strong> defines the sequence or order in which individual bytes are stored at consecutive memory addresses.</p>
+
+                <p>Suppose we want to store the 32-bit hex value <code>0x12345678</code> starting at memory address <code>0x100</code>:</p>
+
+                <div class="endian-box">
+                    <div class="endian-card">
+                        <h3 style="margin-top:0; color:#4f46e5;">Big-Endian</h3>
+                        <p style="font-size: 0.9rem; color: #4b5563;">Stores the <strong>Most Significant Byte (MSB)</strong> at the smallest memory address.</p>
+                        <div class="byte-cells">
+                            <div class="byte-cell">12<span>0x100 (MSB)</span></div>
+                            <div class="byte-cell">34<span>0x101</span></div>
+                            <div class="byte-cell">56<span>0x102</span></div>
+                            <div class="byte-cell">78<span>0x103 (LSB)</span></div>
+                        </div>
+                        <p style="font-size:0.8rem; color:#6b7280; margin-top:10px;">Used in network protocols (Internet IP headers) and legacy mainframe systems.</p>
+                    </div>
+
+                    <div class="endian-card">
+                        <h3 style="margin-top:0; color:#059669;">Little-Endian</h3>
+                        <p style="font-size: 0.9rem; color: #4b5563;">Stores the <strong>Least Significant Byte (LSB)</strong> at the smallest memory address.</p>
+                        <div class="byte-cells">
+                            <div class="byte-cell">78<span>0x100 (LSB)</span></div>
+                            <div class="byte-cell">56<span>0x101</span></div>
+                            <div class="byte-cell">34<span>0x102</span></div>
+                            <div class="byte-cell">12<span>0x103 (MSB)</span></div>
+                        </div>
+                        <p style="font-size:0.8rem; color:#6b7280; margin-top:10px;">Used by x86, x86-64 (Intel/AMD) processors and modern computer architectures.</p>
+                    </div>
+                </div>
+
+                <div class="summary-box">
+                    <strong>Memory Tip:</strong><br>
+                    <b>Big-Endian:</b> Big end (MSB) comes first in memory.<br>
+                    <b>Little-Endian:</b> Little end (LSB) comes first in memory.
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <script>
+        const TOTAL_TOPICS_COUNT = 11; 
+
+        // Ordered topic sequence for prev/next topic navigation
+        const TOPIC_ORDER = ['arch', 'funda', 'neumann', 'cpu', 'isa', 'execution', 'rtl', 'addressing', 'types', 'risc', 'endian'];
+
+        // Core Question Pool (Phase 1 Gate)
+        const coreQuestionPool = [
+            { q: "Computer architecture mainly deals with ______.", o: ["How the hardware elements are wired together", "What features and functionalities the computer provides", "Chip production steps", "Networking protocols"], a: 1 },
+            { q: "Computer organization deals directly with ______.", o: ["Software compile rules", "Data base configurations", "How the hardware components are built and work internally", "Web routing algorithms"], a: 2 },
+            { q: "Which aspects are explicitly visible to a system software programmer?", o: ["Signal line timings", "Bus width configurations", "ALU gates design", "Instruction Sets & Addressing Modes"], a: 3 },
+            { q: "Which of the following belongs securely to Computer Architecture?", o: ["Cache sizes", "Pipeline setups", "Instruction formats and data types", "Control gate signals"], a: 2 },
+            { q: "Which element is considered a direct part of Computer Organization?", o: ["Addressing mode formats", "Data types scale parameters", "The Control Unit & Bus structures", "Instruction coding formats"], a: 2 },
+            { q: "The primary design feature of a classical von Neumann architecture is:", o: ["Separate specialized physical memory systems for instructions and data", "Storing both program instructions and data inside the same memory space", "Removing control architectures entirely", "Enforcing non-volatile register requirements only"], a: 1 },
+            { q: "Which register stores the memory address of the next instruction waiting to be handled?", o: ["Instruction Register (IR)", "Memory Address Register (MAR)", "Program Counter (PC)", "Memory Data Register (MDR)"], a: 2 },
+            { q: "What sub-component coordinates execution pipelines and structures actions across the CPU?", o: ["Arithmetic Logic Unit", "Cache Memory Line", "Control Unit (CU)", "Input Peripheral Bus"], a: 2 },
+            { q: "The sequential cycle workflow steps performed by the CPU loop are natively:", o: ["Load, Store, Clear", "Fetch, Decode, Execute", "Input, Render, Reset", "Allocate, Transfer, Complete"], a: 1 },
+            { q: "Which functional system performs arithmetic calculations and logical decisions inside a computer?", o: ["Control Unit", "RAM Space", "Arithmetic Logic Unit (ALU)", "I/O Subsystems"], a: 2 },
+            { q: "Which statement best differentiates Computer Architecture from Computer Organization?", o: ["Architecture focuses on software coding only.", "Organization defines programming languages.", "Architecture specifies capabilities, while Organization explains implementation.", "Both mean exactly the same thing."], a: 2 },
+            { q: "Which of the following is decided by Computer Architecture?", o: ["Number of wires on the motherboard", "Available instruction set", "Placement of transistors", "CPU cooling method"], a: 1 },
+            { q: "The internal arrangement of buses is an example of:", o: ["Computer Architecture", "Computer Graphics", "Computer Organization", "Operating System"], a: 2 },
+            { q: "Which of the following would most likely change Computer Organization without changing Architecture?", o: ["Increasing cache size", "Adding a new instruction", "Changing data types", "Changing addressing modes"], a: 0 },
+            { q: "Which fundamental of Computer Architecture allows a processor to understand program commands?", o: ["Data Representation", "I/O System", "ISA", "Cache Memory"], a: 2 },
+            { q: "Data Representation mainly determines how ______ are stored.", o: ["Programs only", "Numbers, characters, and symbols", "Hardware components", "Network packets"], a: 1 },
+            { q: "Which component connects the CPU with external devices?", o: ["Memory Unit", "Input/Output System", "ALU", "Cache Controller"], a: 1 },
+            { q: "Which memory is closest to the CPU for faster access?", o: ["Hard Disk", "Optical Disk", "Cache Memory", "Flash Drive"], a: 2 },
+            { q: "The processor communicates with memory primarily to:", o: ["Charge the motherboard", "Read instructions and store results", "Print documents", "Connect to the internet"], a: 1 },
+            { q: "Which of the following is NOT considered an input device?", o: ["Scanner", "Keyboard", "Mouse", "Printer"], a: 3 },
+            { q: "The CPU fetches instructions from:", o: ["ALU", "Registers only", "Memory", "Output Unit"], a: 2 },
+            { q: "During execution, the Control Unit mainly sends:", o: ["Video signals", "Control signals", "Sound signals", "Network packets"], a: 1 },
+            { q: "Which unit actually performs comparison operations like greater than or equal to?", o: ["RAM", "Cache", "ALU", "Monitor"], a: 2 },
+            { q: "Which unit is responsible for coordinating all CPU activities?", o: ["Memory", "Input Unit", "Control Unit", "Hard Disk"], a: 2 },
+            { q: "Which component temporarily stores both data and instructions while processing?", o: ["Main Memory", "Monitor", "Printer", "Keyboard"], a: 0 },
+            { q: "The Von Neumann architecture is also known as the ______ concept.", o: ["Harvard Memory", "Stored Program", "Parallel Pipeline", "Distributed Memory"], a: 1 },
+            { q: "In a Von Neumann machine, instructions are stored in:", o: ["CPU only", "Input Unit", "Main Memory", "Output Device"], a: 2 },
+            { q: "Which operation happens immediately after an instruction is decoded?", o: ["Fetch next program", "Execute instruction", "Shut down CPU", "Save file"], a: 1 },
+            { q: "The output generated by the CPU is usually sent to:", o: ["Input devices", "Output devices or memory", "BIOS only", "Registers permanently"], a: 1 },
+            { q: "Which CPU subsystem directly communicates with RAM?", o: ["Memory System", "Mouse", "Keyboard", "Printer"], a: 0 },
+            { q: "Which hardware unit receives user commands?", o: ["ALU", "Input Unit", "Output Unit", "Cache"], a: 1 },
+            { q: "Which hardware unit presents processed information to the user?", o: ["Control Unit", "ALU", "Output Unit", "RAM"], a: 2 },
+            { q: "Which component determines the sequence of operations performed by the CPU?", o: ["Hard Disk", "Control Unit", "Cache", "Printer"], a: 1 },
+            { q: "Which of the following devices is an example of an output device?", o: ["Scanner", "Webcam", "Plotter", "Joystick"], a: 2 },
+            { q: "Which statement about Cache Memory is correct?", o: ["It is slower than RAM.", "It is external storage.", "It stores frequently accessed data for faster CPU access.", "It permanently stores the operating system."], a: 2 },
+            { q: "Which CPU component makes logical decisions such as AND, OR, and NOT?", o: ["ALU", "RAM", "Input Unit", "Monitor"], a: 0 },
+            { q: "Which subsystem allows the CPU to interact with peripheral devices?", o: ["Memory Subsystem", "I/O Subsystem", "ALU", "Register Bank"], a: 1 },
+            { q: "Which of the following is NOT part of the Von Neumann machine components?", o: ["Memory Unit", "Control Unit", "Compiler", "Arithmetic Logic Unit"], a: 2 },
+            { q: "Which characteristic is common to all CPUs?", o: ["They all use the same cache size.", "They execute instructions.", "They have identical instruction sets.", "They always use the Harvard architecture."], a: 1 },
+            { q: "The overall purpose of Computer Architecture is to:", o: ["Manufacture processors", "Define the capabilities and operation of a computer system", "Design networking equipment", "Increase internet speed"], a: 1 }
+        ];
+
+        // Instruction Question Pool (Phase 2 Gate)
+        const instructionQuestionPool = [
+            { q: "What does ISA stand for?", o: ["Internal Storage Area", "Instruction Set Architecture", "Instruction System Access", "Integrated Software Architecture"], a: 1 },
+            { q: "Which register stores the address of the next instruction to be executed?", o: ["IR", "ACC", "PC", "MDR"], a: 2 },
+            { q: "The Instruction Register (IR) stores:", o: ["The next memory address", "The current instruction being executed", "Arithmetic results", "Input data"], a: 1 },
+            { q: "Which register stores intermediate arithmetic and logical results?", o: ["MAR", "ACC", "PC", "MDR"], a: 1 },
+            { q: "Which register holds the address of the memory location to be accessed?", o: ["IR", "MAR", "MDR", "ACC"], a: 1 },
+            { q: "Which register stores data being read from or written to memory?", o: ["PC", "MDR", "IR", "MAR"], a: 1 },
+            { q: "What is the correct order of the Instruction Execution Cycle?", o: ["Execute → Fetch → Decode → Store", "Fetch → Decode → Execute → Store", "Decode → Fetch → Store → Execute", "Store → Fetch → Execute → Decode"], a: 1 },
+            { q: "During which stage does the CPU retrieve an instruction from memory?", o: ["Execute", "Decode", "Fetch", "Store"], a: 2 },
+            { q: "Which unit decodes the instruction?", o: ["ALU", "Control Unit", "Register Unit", "Memory Unit"], a: 1 },
+            { q: "Which unit performs arithmetic and logical operations?", o: ["CPU Cache", "ALU", "Control Unit", "MAR"], a: 1 },
+            { q: "What does the RTL statement R2 ← R1 mean?", o: ["Add R1 and R2", "Copy R2 into R1", "Copy R1 into R2", "Delete R1"], a: 2 },
+            { q: "What does M[100] ← R1 represent?", o: ["Load data from memory address 100", "Store R1 contents into memory address 100", "Add R1 with memory", "Move data to R2"], a: 1 },
+            { q: "Which addressing mode uses the actual value directly in the instruction?", o: ["Direct Addressing", "Immediate Addressing", "Register Addressing", "Indexed Addressing"], a: 1 },
+            { q: "In MOV R1, #10, which addressing mode is used?", o: ["Immediate Addressing", "Direct Addressing", "Register Addressing", "Register Indirect Addressing"], a: 0 },
+            { q: "In MOV R1, [100], the CPU gets data from:", o: ["Register R1", "Memory location 100", "Immediate value 100", "Program Counter"], a: 1 },
+            { q: "Which addressing mode uses a register to store the memory address?", o: ["Direct Addressing", "Immediate Addressing", "Register Indirect Addressing", "Indexed Addressing"], a: 2 },
+            { q: "Indexed Addressing is mainly used for accessing:", o: ["Instructions", "Arrays", "Registers", "CPU control signals"], a: 1 },
+            { q: "Which instruction type is used to perform addition and subtraction?", o: ["Logical Instructions", "Arithmetic Instructions", "Branch Instructions", "I/O Instructions"], a: 1 },
+            { q: "Which of the following is a branch instruction?", o: ["ADD", "MOV", "JMP", "AND"], a: 2 },
+            { q: "Which instructions are used for shifting and rotating bits?", o: ["IN, OUT", "MOV, LOAD", "SHL, SHR, ROL, ROR", "ADD, SUB"], a: 2 },
+            { q: "CPU registers are located inside the:", o: ["Hard Disk", "RAM", "CPU", "Motherboard"], a: 2 },
+            { q: "Registers are faster than:", o: ["Cache Memory", "RAM", "CPU", "ALU"], a: 1 },
+            { q: "Which register keeps track of the instruction sequence?", o: ["MDR", "PC", "IR", "ACC"], a: 1 },
+            { q: "The Program Counter contains:", o: ["Current instruction", "Result of calculation", "Address of the next instruction", "Data from memory"], a: 2 },
+            { q: "Which register stores the result of ALU operations temporarily?", o: ["ACC", "MAR", "PC", "IR"], a: 0 },
+            { q: "RTL stands for:", o: ["Register Transfer Language", "Real Time Logic", "Register Timing Logic", "Random Transfer Language"], a: 0 },
+            { q: "RTL describes:", o: ["High-level programs", "Data movement between registers and memory", "Computer networks", "Operating systems"], a: 1 },
+            { q: "Addressing mode determines:", o: ["CPU speed", "Location of operand/data", "Memory size", "Number of registers"], a: 1 },
+            { q: "Example of Immediate Addressing is:", o: ["MOV R1, R2", "MOV R1, #25", "MOV R1, [100]", "MOV R1, [R2]"], a: 1 },
+            { q: "JMP instruction is used for:", o: ["Data transfer", "Changing program flow", "Addition", "Input operation"], a: 1 }
+        ];
+
+        let quizState = {
+            core: { set: [], index: 0, submitted: false },
+            instruction: { set: [], index: 0, submitted: false }
+        };
+
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('app-sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('mobile-open');
+            }
+        }
+
+        function toggleBranch(branchId) {
+            const branchEl = document.getElementById(`branch-${branchId}`);
+            if (branchEl && !branchEl.classList.contains('locked-branch')) {
+                branchEl.classList.toggle('collapsed');
+            }
+        }
+
+        function shuffleArray(array) {
+            let currentIdx = array.length, randomIdx;
+            while (currentIdx !== 0) {
+                randomIdx = Math.floor(Math.random() * currentIdx);
+                currentIdx--;
+                [array[currentIdx], array[randomIdx]] = [array[randomIdx], array[currentIdx]];
+            }
+            return array;
+        }
+
+        function prepareQuizSet(type) {
+            let pool = type === 'core' ? coreQuestionPool : instructionQuestionPool;
+            let clonedPool = JSON.parse(JSON.stringify(pool));
+            shuffleArray(clonedPool);
+            quizState[type].set = clonedPool.slice(0, 10);
+            quizState[type].index = 0;
+            quizState[type].submitted = false;
+        }
+
+        function navigateToPage(targetPageId) {
+            const targetMenuItem = document.getElementById(`menu-${targetPageId}`);
+            if (targetMenuItem && targetMenuItem.classList.contains('locked-item')) {
+                return false; 
+            }
+            
+            document.querySelectorAll('.app-page').forEach(page => page.classList.remove('active-page'));
+            document.querySelectorAll('.topic-menu-item').forEach(item => item.classList.remove('active-item'));
+
+            const targetPage = document.getElementById(`page-${targetPageId}`);
+            if(targetPage) targetPage.classList.add('active-page');
+            if(targetMenuItem) targetMenuItem.classList.add('active-item');
+            
+            const sidebar = document.getElementById('app-sidebar');
+            if (sidebar) sidebar.classList.remove('mobile-open');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return true;
+        }
+
+        function stepTopic(direction) {
+            const activePage = document.querySelector('.app-page.active-page');
+            if (!activePage) return;
+
+            const currentId = activePage.id.replace('page-', '');
+            const currentIdx = TOPIC_ORDER.indexOf(currentId);
+            if (currentIdx === -1) return;
+
+            const targetIdx = currentIdx + direction;
+            if (targetIdx >= 0 && targetIdx < TOPIC_ORDER.length) {
+                const targetId = TOPIC_ORDER[targetIdx];
+                const targetMenuItem = document.getElementById(`menu-${targetId}`);
+
+                if (targetMenuItem && targetMenuItem.classList.contains('locked-item')) {
+                    // Smooth scroll to the quiz box on current page if user tries to jump past a quiz gate
+                    if (currentId === 'cpu') {
+                        document.getElementById('quiz-box-core').scrollIntoView({ behavior: 'smooth' });
+                    } else if (currentId === 'types') {
+                        document.getElementById('quiz-box-instruction').scrollIntoView({ behavior: 'smooth' });
+                    }
+                } else {
+                    navigateToPage(targetId);
+                }
+            }
+        }
+
+        function injectTopicNavigation() {
+            TOPIC_ORDER.forEach((topicId, idx) => {
+                const pageEl = document.getElementById(`page-${topicId}`);
+                if (!pageEl) return;
+                const sectionEl = pageEl.querySelector('section');
+                if (!sectionEl) return;
+
+                // Remove previous navigation bar if already present
+                const existingNav = sectionEl.querySelector('.topic-page-nav');
+                if (existingNav) existingNav.remove();
+
+                const navDiv = document.createElement('div');
+                navDiv.className = 'topic-page-nav';
+
+                const prevTopicId = idx > 0 ? TOPIC_ORDER[idx - 1] : null;
+                const nextTopicId = idx < TOPIC_ORDER.length - 1 ? TOPIC_ORDER[idx + 1] : null;
+
+                const prevBtn = document.createElement('button');
+                prevBtn.className = 'topic-nav-btn';
+                prevBtn.innerHTML = '← Previous Topic';
+                if (!prevTopicId) {
+                    prevBtn.disabled = true;
+                } else {
+                    prevBtn.onclick = () => stepTopic(-1);
+                }
+
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'topic-nav-btn';
+                
+                if (!nextTopicId) {
+                    nextBtn.innerHTML = 'Course Completed 🎉';
+                    nextBtn.disabled = true;
+                } else {
+                    const isNextLocked = document.getElementById(`menu-${nextTopicId}`)?.classList.contains('locked-item');
+                    if (isNextLocked) {
+                        nextBtn.innerHTML = '🔒 Complete Quiz to Unlock Next';
+                        nextBtn.classList.add('locked-next-btn');
+                    } else {
+                        nextBtn.innerHTML = 'Next Topic →';
+                    }
+                    nextBtn.onclick = () => stepTopic(1);
+                }
+
+                navDiv.appendChild(prevBtn);
+                navDiv.appendChild(nextBtn);
+                sectionEl.appendChild(navDiv);
+            });
+        }
+
+        function updateCourseProgressWidget() {
+            let unlockedCount = 4;
+            if (localStorage.getItem('advanced_phase_unlocked') === 'true') {
+                unlockedCount = 11; 
+            } else if (localStorage.getItem('instruction_phase_unlocked') === 'true') {
+                unlockedCount = 9; 
+            }
+            
+            let calculatedPercentage = Math.round((unlockedCount / TOTAL_TOPICS_COUNT) * 100);
+            document.getElementById('progress-percent-txt').textContent = `${calculatedPercentage}%`;
+            document.getElementById('progress-count-txt').textContent = unlockedCount;
+            document.getElementById('course-progress-fill').style.width = `${calculatedPercentage}%`;
+        }
+
+        function renderQuizHTML(type) {
+            if (quizState[type].set.length === 0) {
+                prepareQuizSet(type);
+            }
+            
+            const container = document.getElementById(`slider-content-area-${type}`);
+            if (!container) return;
+            container.innerHTML = '';
+
+            quizState[type].set.forEach((qObj, qIdx) => {
+                const slideDiv = document.createElement('div');
+                slideDiv.className = `quiz-slide ${qIdx === quizState[type].index ? 'active-slide' : ''}`;
+                slideDiv.id = `slide-${type}-${qIdx}`;
+                slideDiv.innerHTML = `<p style="font-size:1rem; font-weight:600;"><strong>Q${qIdx + 1}:</strong> ${qObj.q}</p>`;
+
+                const optionsDiv = document.createElement('div');
+                optionsDiv.className = 'quiz-options';
+
+                qObj.o.forEach((opt, oIdx) => {
+                    optionsDiv.innerHTML += `
+                        <label class="option-wrapper" id="label-${type}-${qIdx}-${oIdx}">
+                            <input type="radio" name="question-${type}-${qIdx}" value="${oIdx}">
+                            <span>${opt}</span>
+                        </label>
+                    `;
+                });
+
+                slideDiv.appendChild(optionsDiv);
+                container.appendChild(slideDiv);
+            });
+
+            updateSliderControlsUI(type);
+        }
+
+        function shiftQuizSlide(type, direction) {
+            document.getElementById(`slide-${type}-${quizState[type].index}`).classList.remove('active-slide');
+            quizState[type].index += direction;
+            if (quizState[type].index < 0) quizState[type].index = 0;
+            if (quizState[type].index >= 10) quizState[type].index = 9;
+            document.getElementById(`slide-${type}-${quizState[type].index}`).classList.add('active-slide');
+            updateSliderControlsUI(type);
+        }
+
+        function updateSliderControlsUI(type) {
+            document.getElementById(`slide-index-txt-${type}`).textContent = `Question ${quizState[type].index + 1} / 10`;
+            document.getElementById(`prev-btn-${type}`).disabled = (quizState[type].index === 0);
+            document.getElementById(`next-btn-${type}`).disabled = (quizState[type].index === 9);
+            document.getElementById(`review-btn-${type}`).style.display = quizState[type].submitted ? 'inline-block' : 'none';
+        }
+
+        function evaluateQuiz(type) {
+            let score = 0;
+            let unanswered = false;
+
+            quizState[type].set.forEach((qObj, qIdx) => {
+                const selected = document.querySelector(`input[name="question-${type}-${qIdx}"]:checked`);
+                if (!selected) {
+                    unanswered = true;
+                } else if (parseInt(selected.value) === qObj.a) {
+                    score++;
+                }
+            });
+
+            const feedback = document.getElementById(`feedback-${type}`);
+            feedback.style.display = 'block';
+
+            if (unanswered) {
+                feedback.className = "quiz-feedback fail";
+                feedback.innerHTML = "⚠️ Examination incomplete. Please solve all 10 evaluation nodes before submitting.";
+                return;
+            }
+
+            // Mark as submitted and lock all inputs so options cannot be changed post-evaluation
+            quizState[type].submitted = true;
+
+            document.querySelectorAll(`input[name^="question-${type}-"]`).forEach(input => {
+                input.disabled = true;
+            });
+
+            // Hide submit button to prevent re-evaluating modified selections
+            const submitBtn = document.getElementById(`submit-btn-${type}`);
+            if (submitBtn) submitBtn.style.display = 'none';
+
+            document.getElementById(`review-btn-${type}`).style.display = 'inline-block';
+
+            if (score >= 4) {
+                feedback.className = "quiz-feedback success";
+                
+                if (type === 'core') {
+                    feedback.innerHTML = `🎉 You scored ${score}/10. The entire Instruction Design is now completely unlocked.`;
+                    localStorage.setItem('instruction_phase_unlocked', 'true');
+                } else {
+                    feedback.innerHTML = `🎉 You scored ${score}/10. The Advanced Topologies is now completely unlocked!`;
+                    localStorage.setItem('advanced_phase_unlocked', 'true');
+                }
+                
+                updateCourseProgressWidget();
+                applyUnlockUIState();
+                injectTopicNavigation(); // Refresh navigation buttons to unlock Next Topic
+            } else {
+                feedback.className = "quiz-feedback fail";
+                feedback.innerHTML = `❌ Dynamic validation gate check failed. You scored ${score}/10. A score of 4 or higher is required. Review mistakes or click Retake Quiz to try again with a fresh set.`;
+                document.getElementById(`retake-btn-${type}`).style.display = 'inline-block';
+            }
+        }
+
+        function retakeQuiz(type) {
+            const feedback = document.getElementById(`feedback-${type}`);
+            if (feedback) feedback.style.display = 'none';
+
+            const submitBtn = document.getElementById(`submit-btn-${type}`);
+            if (submitBtn) submitBtn.style.display = 'inline-block';
+
+            const retakeBtn = document.getElementById(`retake-btn-${type}`);
+            if (retakeBtn) retakeBtn.style.display = 'none';
+
+            const reviewBtn = document.getElementById(`review-btn-${type}`);
+            if (reviewBtn) reviewBtn.style.display = 'none';
+
+            prepareQuizSet(type);
+            renderQuizHTML(type);
+        }
+
+        function toggleReviewMode(type) {
+            if (!quizState[type].submitted) return; 
+            quizState[type].set.forEach((qObj, qIdx) => {
+                const selected = document.querySelector(`input[name="question-${type}-${qIdx}"]:checked`);
+                const selectedValue = selected ? parseInt(selected.value) : null;
+                qObj.o.forEach((opt, oIdx) => {
+                    const targetsLabel = document.getElementById(`label-${type}-${qIdx}-${oIdx}`);
+                    if (!targetsLabel) return;
+                    targetsLabel.classList.remove('review-correct', 'review-incorrect');
+                    if (oIdx === qObj.a) {
+                        targetsLabel.classList.add('review-correct');
+                        if (!targetsLabel.innerHTML.includes('✅')) {
+                            targetsLabel.innerHTML += ' <span style="float:right;">✅ Correct</span>';
+                        }
+                    }
+                    if (selectedValue !== null && selectedValue !== qObj.a && oIdx === selectedValue) {
+                        targetsLabel.classList.add('review-incorrect');
+                        if (!targetsLabel.innerHTML.includes('❌')) {
+                            targetsLabel.innerHTML += ' <span style="float:right;">❌ Incorrect</span>';
+                        }
+                    }
+                });
+            });
+        }
+
+        function applyUnlockUIState() {
+            const phase2Passed = localStorage.getItem('instruction_phase_unlocked') === 'true';
+            const phase3Passed = localStorage.getItem('advanced_phase_unlocked') === 'true';
+
+            if (phase2Passed) {
+                const branchInstruction = document.getElementById('branch-instruction');
+                if (branchInstruction) {
+                    branchInstruction.classList.remove('locked-branch');
+                    branchInstruction.querySelector('.branch-hub').innerHTML = 'Instruction Design';
+                }
+                
+                const itemsToUnlock = ['isa', 'execution', 'rtl', 'addressing', 'types'];
+                itemsToUnlock.forEach(id => {
+                    const item = document.getElementById(`menu-${id}`);
+                    if (item) {
+                        item.classList.remove('locked-item');
+                        item.innerHTML = item.innerHTML.replace('🔒 ', '');
+                    }
+                });
+            }
+
+            if (phase3Passed) {
+                const branchAdvanced = document.getElementById('branch-advanced');
+                if (branchAdvanced) {
+                    branchAdvanced.classList.remove('locked-branch');
+                    branchAdvanced.querySelector('.branch-hub').innerHTML = 'Advanced Topologies';
+                }
+
+                const itemsToUnlock = ['risc', 'endian'];
+                itemsToUnlock.forEach(id => {
+                    const item = document.getElementById(`menu-${id}`);
+                    if (item) {
+                        item.classList.remove('locked-item');
+                        item.innerHTML = item.innerHTML.replace('🔒 ', '');
+                    }
+                });
+            }
+        }
+
+        function checkLocalStorageStateOnLoad() {
+            const gate1Passed = localStorage.getItem('instruction_phase_unlocked') === 'true';
+            const gate2Passed = localStorage.getItem('advanced_phase_unlocked') === 'true';
+
+            prepareQuizSet('core');
+            prepareQuizSet('instruction');
+
+            if (gate1Passed) {
+                quizState.core.submitted = true;
+                const submitBtnCore = document.getElementById('submit-btn-core');
+                if(submitBtnCore) submitBtnCore.style.display = 'none';
+            }
+
+            if (gate2Passed) {
+                quizState.instruction.submitted = true;
+                const submitBtnInst = document.getElementById('submit-btn-instruction');
+                if(submitBtnInst) submitBtnInst.style.display = 'none';
+            }
+
+            applyUnlockUIState();
+            renderQuizHTML('core');
+            renderQuizHTML('instruction');
+            updateCourseProgressWidget();
+            injectTopicNavigation();
+        }
+
+        function clearSavedProgress() {
+            localStorage.removeItem('instruction_phase_unlocked');
+            localStorage.removeItem('advanced_phase_unlocked');
+            alert("Mindmap lock configurations successfully restored! Restoring locks...");
+            window.location.reload();
+        }
+
+        window.onload = function() {
+            checkLocalStorageStateOnLoad();
+        };
+    </script>
+</body>
+</html>
