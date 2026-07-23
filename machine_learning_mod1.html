@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Machine Learning Fundamentals</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 50%, #f8fafc 100%);
+            min-height: 100vh;
+        }
+
+        .wrap {
+            max-width: 1200px;
+            margin: auto;
+            position: relative;
+        }
+
+        /* MOBILE TOP BAR */
+        .mobile-top-bar {
+            display: none;
+            position: sticky;
+            top: 0;
+            z-index: 1100;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 12px 16px;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .mobile-nav-toggle {
+            background: #4f46e5;
+            color: #ffffff;
+            padding: 8px 14px;
+            font-size: 0.85rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed;
+            top: 25px;
+            left: 25px;
+            z-index: 1000;
+            width: 290px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .progress-sidebar, .topics-sidebar {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px -2px rgba(148, 163, 184, 0.05);
+        }
+
+        .topics-sidebar {
+            max-height: calc(100vh - 160px);
+            overflow-y: auto;
+        }
+
+        .mindmap-branch {
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .branch-hub {
+            display: flex;
+            align-items: center;
+            font-size: 0.75rem;
+            color: #4f46e5;
+            background: #f5f3ff;
+            border: 1px solid #ddd6fe;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+            min-height: 40px;
+        }
+        
+        .branch-hub::before {
+            content: '▼';
+            margin-right: 8px;
+            font-size: 0.65rem;
+            transition: transform 0.2s ease;
+        }
+
+        .mindmap-branch.collapsed .branch-hub::before {
+            transform: rotate(-90deg);
+        }
+
+        .branch-leaves {
+            margin-left: 18px;
+            padding-left: 14px;
+            border-left: 2px dashed #c7d2fe;
+            position: relative;
+            margin-top: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .mindmap-branch.collapsed .branch-leaves {
+            display: none;
+        }
+
+        .topic-menu-item {
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding: 10px 12px;
+            color: #64748b;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            font-weight: 550;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 40px;
+        }
+
+        .topic-menu-item::before {
+            content: '';
+            position: absolute;
+            left: -14px;
+            top: 50%;
+            width: 10px;
+            height: 2px;
+            background-color: #c7d2fe;
+        }
+
+        .status-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            margin-right: 8px;
+            display: inline-block;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .topic-menu-item:not(.locked-item):hover {
+            background: #f1f5f9;
+            color: #1e293b;
+            transform: translateX(2px);
+        }
+
+        .topic-menu-item:not(.locked-item):hover .status-indicator {
+            background: #6366f1;
+            transform: scale(1.3);
+        }
+
+        .topic-menu-item.active-item {
+            background: linear-gradient(90deg, #eef2ff 0%, #e0e7ff 100%);
+            color: #4f46e5;
+            font-weight: 650;
+            box-shadow: 0 4px 12px -3px rgba(99, 102, 241, 0.2);
+        }
+
+        .topic-menu-item.active-item .status-indicator {
+            background: #4f46e5;
+            box-shadow: 0 0 6px #4f46e5;
+        }
+
+        .topic-menu-item.locked-item {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f3f4f6;
+            color: #94a3b8;
+        }
+
+        .mindmap-branch.locked-branch .branch-hub {
+            background: #f3f4f6;
+            border-color: #e5e7eb;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .mindmap-branch.locked-branch .branch-leaves {
+            display: none !important;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            background: #e5e7eb;
+            height: 10px;
+            border-radius: 999px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 17%;
+            background: linear-gradient(90deg, #6366f1, #10b981);
+            border-radius: 999px;
+            transition: width 0.5s ease;
+        }
+
+        header {
+            padding: 40px 20px 20px 340px; 
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: clamp(1.5rem, 4vw, 2.4rem);
+            color: #111827;
+            font-weight: 800;
+        }
+
+        main {
+            padding: 20px 20px 60px 340px; 
+        }
+
+        .app-page { display: none; }
+        .app-page.active-page { display: block; }
+
+        section {
+            background: rgba(255, 255, 255, .85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, .5);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,.03);
+        }
+
+        h2 {
+            margin-bottom: 16px;
+            font-size: 1.4rem;
+            color: #111827;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 8px;
+        }
+
+        h3 { margin: 20px 0 10px; color: #111827; font-size: 1.15rem; }
+        p { margin-bottom: 12px; }
+        ul, ol { margin-left: 20px; margin-bottom: 15px; }
+        li { margin-bottom: 6px; }
+
+        /* RESPONSIVE TABLE WRAPPER */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 16px 0;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #ffffff;
+            min-width: 500px;
+        }
+        th, td { padding: 12px 14px; border: 1px solid #e5e7eb; text-align: left; font-size: 0.9rem; }
+        th { background: #f8fafc; font-weight: 600; }
+
+        .summary-box {
+            background: #f0fdf4;
+            border-left: 4px solid #10b981;
+            padding: 14px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-size: 0.95rem;
+        }
+
+        /* TOPIC BOTTOM NAVIGATION */
+        .topic-page-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .topic-nav-btn {
+            background: #4f46e5;
+            color: #ffffff;
+            padding: 10px 16px;
+            font-size: 0.88rem;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            min-height: 44px;
+        }
+
+        .topic-nav-btn:hover:not(:disabled) {
+            background: #4338ca;
+            transform: translateY(-1px);
+        }
+
+        .topic-nav-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            background: #9ca3af;
+        }
+
+        .topic-nav-btn.locked-next-btn {
+            background: #6b7280;
+        }
+
+        /* QUIZ ENGINE GRID INFRASTRUCTURE */
+        .quiz-box {
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .quiz-slide { display: none; }
+        .quiz-slide.active-slide { display: block; }
+        .quiz-options { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 15px; }
+
+        .option-wrapper {
+            display: flex;
+            align-items: center;
+            padding: 12px 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            min-height: 48px;
+            font-size: 0.92rem;
+        }
+        .option-wrapper:hover { background: #f1f5f9; }
+        .option-wrapper input { margin-right: 12px; flex-shrink: 0; width: 18px; height: 18px; }
+
+        .option-wrapper.review-correct { background: #dcfce7 !important; border-color: #10b981 !important; color: #15803d !important; font-weight: 600; }
+        .option-wrapper.review-incorrect { background: #fee2e2 !important; border-color: #f87171 !important; color: #b91c1c !important; }
+
+        .quiz-navigation-controls {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            justify-items: center;
+            gap: 12px;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .quiz-action-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .quiz-feedback { padding: 14px; border-radius: 10px; margin-top: 15px; font-weight: 600; font-size: 0.9rem; display: none; }
+        .quiz-feedback.success { background: #dcfce7; color: #16a34a; }
+        .quiz-feedback.fail { background: #fee2e2; color: #dc2626; }
+
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            background: #111827;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .2s;
+            white-space: nowrap;
+            min-height: 42px;
+            font-size: 0.9rem;
+        }
+        button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(17,24,39,0.15); }
+        button:disabled { opacity: 0.3; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .review-btn { background: #6366f1; }
+        .reset-btn { background: #6b7280; font-size: 0.8rem; padding: 8px 14px; margin-top: 20px; }
+        code { font-family: Consolas, monospace; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 0.88em; }
+
+        /* RESPONSIVE MEDIA QUERIES */
+        @media (max-width: 992px) {
+            .mobile-top-bar {
+                display: flex;
+            }
+
+            .sidebar {
+                position: fixed;
+                top: 57px;
+                left: 0;
+                right: 0;
+                width: 100%;
+                height: calc(100vh - 57px);
+                background: rgba(248, 250, 252, 0.98);
+                backdrop-filter: blur(12px);
+                padding: 16px;
+                overflow-y: auto;
+                display: none;
+                z-index: 1050;
+            }
+
+            .sidebar.mobile-open {
+                display: flex;
+            }
+
+            .topics-sidebar {
+                max-height: none;
+            }
+
+            header {
+                padding: 24px 16px 12px 16px;
+            }
+
+            main {
+                padding: 12px 16px 40px 16px;
+            }
+
+            section {
+                padding: 18px;
+                border-radius: 16px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .quiz-navigation-controls {
+                grid-template-columns: 1fr auto 1fr;
+                gap: 8px;
+                align-items: center;
+                padding-top: 14px;
+            }
+            
+            .quiz-navigation-controls button {
+                width: 100%;
+                padding: 10px 8px;
+                font-size: 0.85rem;
+            }
+
+            .quiz-action-area {
+                flex-direction: column;
+                gap: 10px;
+                margin-top: 14px;
+            }
+
+            .quiz-action-area button {
+                width: 100%;
+                padding: 12px;
+                font-size: 0.95rem;
+                min-height: 48px;
+                text-align: center;
+            }
+
+            .topic-page-nav {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .topic-nav-btn {
+                width: 100%;
+                min-height: 48px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- MOBILE STICKY NAVIGATION BAR -->
+    <div class="mobile-top-bar">
+        <span style="font-weight: 700; font-size: 0.9rem; color: #111827;">Machine Learning</span>
+        <button class="mobile-nav-toggle" onclick="toggleMobileMenu()">🗺️ Mind Map</button>
+    </div>
+
+    <!-- SIDEBAR INFRASTRUCTURE -->
+    <div class="sidebar" id="app-sidebar">
+        <div class="progress-sidebar">
+            <div style="font-size: 0.75rem; font-weight: 700; color: #4b5563; letter-spacing: 0.05em; display: flex; justify-content: space-between; align-items: center;">
+                <span>MAP COMPLETION</span>
+                <span id="progress-percent-txt" style="color: #6366f1; font-weight: 800;">17%</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="course-progress-fill"></div>
+            </div>
+            <div style="font-size: 0.75rem; color: #6b7280; margin-top: 8px; font-weight: 500;">
+                Completed: <span id="progress-count-txt" style="color: #111827; font-weight: 700;">1</span> / 6 Covered
+            </div>
+        </div>
+
+        <div class="topics-sidebar">
+            <!-- Branch 1 -->
+            <div class="mindmap-branch" id="branch-m1">
+                <div class="branch-hub" onclick="toggleBranch('m1')">1. Intro &amp; Basics</div>
+                <div class="branch-leaves">
+                    <a href="#" class="topic-menu-item active-item" id="menu-m1" onclick="navigateToPage('m1')">
+                        <span class="status-indicator"></span> 1. ML Foundations
+                    </a>
+                </div>
+            </div>
+
+            <!-- Branch 2 -->
+            <div class="mindmap-branch locked-branch" id="branch-m2">
+                <div class="branch-hub" onclick="toggleBranch('m2')">🔒 2. Learning Paradigms</div>
+                <div class="branch-leaves">
+                    <a href="#" class="topic-menu-item locked-item" id="menu-m2" onclick="navigateToPage('m2')">
+                        <span class="status-indicator"></span> 🔒 2. ML Paradigms
+                    </a>
+                </div>
+            </div>
+
+            <!-- Branch 3 -->
+            <div class="mindmap-branch locked-branch" id="branch-m3">
+                <div class="branch-hub" onclick="toggleBranch('m3')">🔒 3. ML Challenges</div>
+                <div class="branch-leaves">
+                    <a href="#" class="topic-menu-item locked-item" id="menu-m3" onclick="navigateToPage('m3')">
+                        <span class="status-indicator"></span> 🔒 3. 10 ML Challenges
+                    </a>
+                </div>
+            </div>
+
+            <!-- Branch 4 -->
+            <div class="mindmap-branch locked-branch" id="branch-m4">
+                <div class="branch-hub" onclick="toggleBranch('m4')">🔒 4. Testing &amp; Validation</div>
+                <div class="branch-leaves">
+                    <a href="#" class="topic-menu-item locked-item" id="menu-m4" onclick="navigateToPage('m4')">
+                        <span class="status-indicator"></span> 🔒 4. Validation &amp; Metrics
+                    </a>
+                </div>
+            </div>
+
+            <!-- Branch 5 -->
+            <div class="mindmap-branch locked-branch" id="branch-m5">
+                <div class="branch-hub" onclick="toggleBranch('m5')">🔒 5. Data Preparation</div>
+                <div class="branch-leaves">
+                    <a href="#" class="topic-menu-item locked-item" id="menu-m5" onclick="navigateToPage('m5')">
+                        <span class="status-indicator"></span> 🔒 5. Cleaning &amp; Scaling
+                    </a>
+                </div>
+            </div>
+
+            <!-- Branch 6 -->
+            <div class="mindmap-branch locked-branch" id="branch-m6">
+                <div class="branch-hub" onclick="toggleBranch('m6')">🔒 6. Visualization</div>
+                <div class="branch-leaves">
+                    <a href="#" class="topic-menu-item locked-item" id="menu-m6" onclick="navigateToPage('m6')">
+                        <span class="status-indicator"></span> 🔒 6. Plotting Techniques
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <div class="wrap">
+            <h1>Machine Learning</h1>
+        </div>
+    </header>
+    
+    <main class="wrap">
+        
+        <!-- MODULE 1 -->
+        <div id="page-m1" class="app-page active-page">
+            <section>
+                <h2>1. Introduction &amp; Basics of Machine Learning</h2>
+                
+                <h3>Artificial Intelligence vs. Machine Learning vs. Deep Learning</h3>
+                <ul>
+                    <li><strong>Artificial Intelligence (AI):</strong> Science of building intelligent systems capable of performing tasks that normally require human intelligence (e.g., Speech Recognition, Computer Vision, Robotics, NLP, Autonomous Vehicles, Expert Systems).</li>
+                    <li><strong>Machine Learning (ML):</strong> A subset of AI focused on statistical algorithms that learn patterns from data automatically without being explicitly programmed.</li>
+                    <li><strong>Deep Learning (DL):</strong> A subset of ML utilizing multi-layer artificial neural networks to extract feature hierarchies from complex data.</li>
+                </ul>
+
+                <h3>Definitions of Machine Learning</h3>
+                <ul>
+                    <li><strong>Arthur Samuel (1959):</strong> "Field of study that gives computers the ability to learn without being explicitly programmed."</li>
+                    <li><strong>Tom Mitchell:</strong> "A computer program learns from experience <em>E</em> with respect to some task <em>T</em> and performance measure <em>P</em> if its performance at task <em>T</em>, measured by <em>P</em>, improves with experience <em>E</em>." Formally: <code>Learning = f(E, T, P)</code>.</li>
+                </ul>
+
+                <h3>Traditional Programming vs. Machine Learning</h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Traditional Programming</th>
+                                <th>Machine Learning</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Input + Program (Rules) &rarr; Output</td>
+                                <td>Input + Output &rarr; Learning (Model Rules)</td>
+                            </tr>
+                            <tr>
+                                <td>Requires explicit hardcoded rules for every scenario.</td>
+                                <td>Discovers hidden patterns and automatically adapts with new data.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+<!--                 <h3>History &amp; Milestones of ML</h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr><th>Year</th><th>Milestone Event</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>1950</td><td>Alan Turing Test</td></tr>
+                            <tr><td>1957</td><td>Perceptron (Rosenblatt)</td></tr>
+                            <tr><td>1986</td><td>Backpropagation Revival</td></tr>
+                            <tr><td>1997</td><td>IBM Deep Blue defeats Garry Kasparov</td></tr>
+                            <tr><td>2006</td><td>Deep Learning Revival</td></tr>
+                            <tr><td>2012</td><td>AlexNet ImageNet Victory</td></tr>
+                            <tr><td>2016</td><td>AlphaGo defeats Lee Sedol</td></tr>
+                            <tr><td>2022</td><td>ChatGPT Generative AI milestone</td></tr>
+                        </tbody>
+                    </table>
+                </div> -->
+
+                <h3>General Machine Learning Workflow</h3>
+                <div class="summary-box">
+                    <strong>Standard Pipeline:</strong><br>
+                    Problem Definition &rarr; Data Collection &rarr; Preprocessing &rarr; Training &rarr; Testing &rarr; Deployment
+                </div>
+
+                <!-- SECTION 1 QUIZ GATE -->
+                <div class="quiz-box" id="quiz-box-m1">
+                    <h3 style="color: #4338ca; margin-top: 0;">🚀 Section 1 Evaluation Gate</h3>
+                    <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 15px;">Score <strong>4 or more marks (&ge; 4/10)</strong> to unlock Section 2.</p>
+                    
+                    <div id="slider-content-area-m1"></div>
+
+                    <div class="quiz-navigation-controls">
+                        <button id="prev-btn-m1" onclick="shiftQuizSlide('m1', -1)">Previous</button>
+                        <span style="font-weight: 600; color: #4b5563; font-size: 0.85rem;" id="slide-index-txt-m1">Question 1 / 10</span>
+                        <button id="next-btn-m1" onclick="shiftQuizSlide('m1', 1)">Next</button>
+                    </div>
+
+                    <div class="quiz-action-area">
+                        <button id="submit-btn-m1" style="background: #10b981;" onclick="evaluateQuiz('m1')">Submit Examination</button>
+                        <button id="retake-btn-m1" style="background: #f59e0b; display: none;" onclick="retakeQuiz('m1')">🔄 Retake Quiz</button>
+                        <button id="review-btn-m1" class="review-btn" onclick="toggleReviewMode('m1')">Review Mistakes</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback-m1"></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- MODULE 2 -->
+        <div id="page-m2" class="app-page">
+            <section>
+                <h2>2. Types of Machine Learning</h2>
+                
+                <h3>Supervised Learning</h3>
+                <p>Operates on training datasets with target labels: <code>D = {(x_i, y_i)}</code>. The objective is learning a mapping function <code>f(x) &rarr; y</code>.</p>
+                <ul>
+                    <li><strong>Regression:</strong> Predicts continuous numerical values (e.g., House Price Prediction, Temperature, Stock Prices, Sales Forecasting). Evaluated using Mean Squared Error: <code>MSE = (1/n) &sum; (y_i - &ŷ;_i)&sup2;</code>.</li>
+                    <li><strong>Classification:</strong> Predicts discrete categorical class labels (e.g., Spam/Not Spam, Cancer/Healthy, Pass/Fail, Credit Risk). Evaluated using Accuracy and Confusion Matrices.</li>
+                </ul>
+
+                <h3>Unsupervised Learning</h3>
+                <p>Operates on input features without target labels: <code>D = {x_1, x_2, ..., x_n}</code>. Focuses on discovering underlying patterns and structures.</p>
+                <ul>
+                    <li><strong>Clustering:</strong> Grouping similar data points (e.g., Customer Segmentation, K-Means, Agglomerative Hierarchical).</li>
+                    <li><strong>Association Rule Mining:</strong> Identifying frequent item relationships (e.g., Market Basket Analysis).</li>
+                    <li><strong>Dimensionality Reduction:</strong> Projecting data into lower dimensional spaces (e.g., PCA, Image Compression).</li>
+                </ul>
+
+                <h3>Semi-Supervised Learning</h3>
+                <p>Combines a small amount of labeled data (<code>D_L</code>) with a large amount of unlabeled data (<code>D_U</code>): <code>D = D_L + D_U</code>. Highly effective in domains where labeling is expensive (e.g., Medical Imaging, Speech Recognition, Text Classification).</p>
+
+                <h3>Reinforcement Learning</h3>
+                <p>An <strong>Agent</strong> interacts sequentially with an <strong>Environment</strong> by selecting actions and receiving state updates and numeric <strong>Rewards</strong> or penalties. Objective: Maximize total discounted reward over time.</p>
+
+                <!-- SECTION 2 QUIZ GATE -->
+                <div class="quiz-box" id="quiz-box-m2">
+                    <h3 style="color: #4338ca; margin-top: 0;">🚀 Section 2 Evaluation Gate</h3>
+                    <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 15px;">Complete this quiz. Score <strong>4 or more marks (&ge; 4/10)</strong> to unlock Section 3.</p>
+                    
+                    <div id="slider-content-area-m2"></div>
+
+                    <div class="quiz-navigation-controls">
+                        <button id="prev-btn-m2" onclick="shiftQuizSlide('m2', -1)">Previous</button>
+                        <span style="font-weight: 600; color: #4b5563; font-size: 0.85rem;" id="slide-index-txt-m2">Question 1 / 10</span>
+                        <button id="next-btn-m2" onclick="shiftQuizSlide('m2', 1)">Next</button>
+                    </div>
+
+                    <div class="quiz-action-area">
+                        <button id="submit-btn-m2" style="background: #10b981;" onclick="evaluateQuiz('m2')">Submit Examination</button>
+                        <button id="retake-btn-m2" style="background: #f59e0b; display: none;" onclick="retakeQuiz('m2')">🔄 Retake Quiz</button>
+                        <button id="review-btn-m2" class="review-btn" onclick="toggleReviewMode('m2')">Review Mistakes</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback-m2"></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- MODULE 3 -->
+       <!-- MODULE 3 -->
+<div id="page-m3" class="app-page">
+    <section>
+        <h2>3. Machine Learning Challenges</h2>
+        <ol style="margin-left:20px;">
+            <li><strong>Insufficient Training Data:</strong> Small sample sizes prevent algorithms from establishing statistically robust pattern representations[cite: 1].</li>
+            <li><strong>Poor Quality Data:</strong> Duplicate records, incorrect labels, and inconsistent measurements lead to "Garbage In, Garbage Out"[cite: 1].</li>
+            <li><strong>Missing Values:</strong> Null entries requiring removal or statistical imputation (Mean, Median, Mode, KNN)[cite: 1].</li>
+            <li><strong>Noisy Data:</strong> Systemic errors, sensor glitches, or human typing mistakes represented as <code>y = x + &epsilon;</code>[cite: 1].</li>
+            <li><strong>High Dimensional Data:</strong> High feature dimensions (e.g., <code>d = 1000</code>) cause data sparsity and computation bottlenecks (Curse of Dimensionality)[cite: 1].</li>
+            <li><strong>Imbalanced Datasets:</strong> Severe class distribution skews that bias classification decision boundaries[cite: 1].</li>
+            <li><strong>Overfitting:</strong> Model memorizes training noise rather than general trends; yields low training error but high test error (High Variance)[cite: 1].</li>
+            <li><strong>Underfitting:</strong> Model is too simplistic to capture dataset patterns; yields high training and high test error (High Bias)[cite: 1].</li>
+            <li><strong>Bias-Variance Tradeoff:</strong> Total Prediction Error = <code>Bias&sup2; + Variance + Noise</code>[cite: 1].</li>
+            <li><strong>Computational Complexity:</strong> Resource bottlenecks when scaling training pipelines over massive infrastructure[cite: 1].</li>
+        </ol>
+
+        <!-- VISUAL GRAPH COMPONENT -->
+        <h3 style="margin-top: 30px;">Visualizing the Bias-Variance Tradeoff</h3>
+        <p>The graph below illustrates how training error continuously decreases with model complexity, while testing error forms a U-shaped curve where the minimum point determines the optimal balance[cite: 1]:</p>
+        
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center;">
+            <svg viewBox="0 0 700 380" style="width: 100%; max-width: 650px; height: auto; font-family: system-ui, sans-serif;">
+                <!-- Grid Lines -->
+                <line x1="70" y1="50" x2="70" y2="300" stroke="#cbd5e1" stroke-width="2"/>
+                <line x1="70" y1="300" x2="650" y2="300" stroke="#cbd5e1" stroke-width="2"/>
+                
+                <!-- Region Highlights -->
+                <rect x="70" y="50" width="175" height="250" fill="#fee2e2" opacity="0.3"/>
+                <rect x="245" y="50" width="165" height="250" fill="#dcfce7" opacity="0.4"/>
+                <rect x="410" y="50" width="240" height="250" fill="#fee2e2" opacity="0.3"/>
+                
+                <!-- Optimal Line Pointer -->
+                <line x1="327" y1="50" x2="327" y2="300" stroke="#10b981" stroke-width="2" stroke-dasharray="5,5"/>
+
+                <!-- Training Error Curve (Blue) -->
+                <path d="M 80,70 Q 200,200 630,280" fill="none" stroke="#2563eb" stroke-width="3"/>
+                
+                <!-- Testing Error Curve (Red) -->
+                <path d="M 80,60 Q 327,330 630,70" fill="none" stroke="#dc2626" stroke-width="3"/>
+
+                <!-- Point Marker for Minimum Testing Error -->
+                <circle cx="327" cy="195" r="6" fill="#10b981" stroke="#ffffff" stroke-width="2"/>
+
+                <!-- Axes Labels -->
+                <text x="360" y="340" font-size="13" font-weight="700" fill="#1f2937">Model Complexity &rarr;</text>
+                <text x="20" y="170" font-size="13" font-weight="700" fill="#1f2937" transform="rotate(-90 20,170)">&larr; Error Rate</text>
+
+                <!-- Curve Annotations -->
+                <text x="520" y="270" font-size="12" font-weight="700" fill="#2563eb">Training Error</text>
+                <text x="530" y="60" font-size="12" font-weight="700" fill="#dc2626">Testing Error</text>
+
+                <!-- Region Labels -->
+                <text x="110" y="80" font-size="13" font-weight="800" fill="#991b1b">UNDERFITTING</text>
+                <text x="125" y="100" font-size="11" font-weight="600" fill="#b91c1c">(High Bias)</text>
+
+                <text x="282" y="80" font-size="13" font-weight="800" fill="#065f46">OPTIMAL FIT</text>
+                <text x="283" y="100" font-size="11" font-weight="600" fill="#047857">(Best Balance)</text>
+
+                <text x="480" y="80" font-size="13" font-weight="800" fill="#991b1b">OVERFITTING</text>
+                <text x="475" y="100" font-size="11" font-weight="600" fill="#b91c1c">(High Variance)</text>
+            </svg>
+        </div>
+
+        <div class="summary-box">
+            <strong>Key takeaway to remember:</strong><br>
+            &bull; <b>High Bias (Underfitting):</b> Simple model, fails on both training and test data[cite: 1].<br>
+            &bull; <b>Optimal Point:</b> Lowest testing error point on the curve[cite: 1].<br>
+            &bull; <b>High Variance (Overfitting):</b> Complex model, memorizes training noise, fails on test data[cite: 1].
+        </div>
+
+        <!-- SECTION 3 QUIZ GATE -->
+        <div class="quiz-box" id="quiz-box-m3">
+            <h3 style="color: #4338ca; margin-top: 0;">🚀 Section 3 Evaluation Gate</h3>
+            <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 15px;">Complete this quiz. Score <strong>4 or more marks (&ge; 4/10)</strong> to unlock Section 4.</p>
+            
+            <div id="slider-content-area-m3"></div>
+
+            <div class="quiz-navigation-controls">
+                <button id="prev-btn-m3" onclick="shiftQuizSlide('m3', -1)">Previous</button>
+                <span style="font-weight: 600; color: #4b5563; font-size: 0.85rem;" id="slide-index-txt-m3">Question 1 / 10</span>
+                <button id="next-btn-m3" onclick="shiftQuizSlide('m3', 1)">Next</button>
+            </div>
+
+            <div class="quiz-action-area">
+                <button id="submit-btn-m3" style="background: #10b981;" onclick="evaluateQuiz('m3')">Submit Examination</button>
+                <button id="retake-btn-m3" style="background: #f59e0b; display: none;" onclick="retakeQuiz('m3')">🔄 Retake Quiz</button>
+                <button id="review-btn-m3" class="review-btn" onclick="toggleReviewMode('m3')">Review Mistakes</button>
+            </div>
+            <div class="quiz-feedback" id="feedback-m3"></div>
+        </div>
+    </section>
+</div>
+
+        <!-- MODULE 4 -->
+        <div id="page-m4" class="app-page">
+            <section>
+                <h2>4. Testing, Validation &amp; Evaluation Metrics</h2>
+                
+                <h3>Data Splitting</h3>
+                <ul>
+                    <li><strong>Training Set:</strong> Used to fit model parameters (&theta;). Typical splits: 70-15-15% or 80-20%.</li>
+                    <li><strong>Validation Set:</strong> Used for hyperparameter tuning (learning rate, depth, trees), model selection, and early stopping.</li>
+                    <li><strong>Testing Set:</strong> Evaluates final generalization performance (evaluated only once at the end).</li>
+                </ul>
+
+                <h3>Validation Methods</h3>
+                <ul>
+                    <li><strong>Hold-Out Validation:</strong> Simple train/test split. Fast but sensitive to data partitioning variance.</li>
+                    <li><strong>K-Fold Cross-Validation:</strong> Splits data into K equal folds (e.g., K=5 or 10). Trains on K-1 folds, tests on 1 fold iteratively. Overall score is the mean across folds.</li>
+                    <li><strong>Leave-One-Out Cross-Validation (LOOCV):</strong> K-Fold where K = N (sample count). Low bias, but computationally expensive.</li>
+                </ul>
+
+                <h3>Evaluation Metrics</h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Metric</th>
+                                <th>Formula / Definition</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td rowspan="4"><strong>Classification</strong></td>
+                                <td>Accuracy</td>
+                                <td><code>(TP + TN) / (TP + TN + FP + FN)</code></td>
+                            </tr>
+                            <tr>
+                                <td>Precision</td>
+                                <td><code>TP / (TP + FP)</code></td>
+                            </tr>
+                            <tr>
+                                <td>Recall</td>
+                                <td><code>TP / (TP + FN)</code></td>
+                            </tr>
+                            <tr>
+                                <td>F1 Score</td>
+                                <td><code>2 &middot; P &middot; R / (P + R)</code></td>
+                            </tr>
+                            <tr>
+                                <td rowspan="4"><strong>Regression</strong></td>
+                                <td>MAE</td>
+                                <td><code>(1/n) &sum; |y - ŷ;|</code></td>
+                            </tr>
+                            <tr>
+                                <td>MSE</td>
+                                <td><code>(1/n) &sum; (y - ŷ;)&sup2;</code></td>
+                            </tr>
+                            <tr>
+                                <td>RMSE</td>
+                                <td><code>&radic;(MSE)</code></td>
+                            </tr>
+                            <tr>
+                                <td>R-squared (R&sup2;)</td>
+                                <td><code>1 - (SS_res / SS_tot)</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>10 Guidelines for Machine Learning Experiments</h3>
+                <ol style="margin-left:20px;">
+                    <li>Clearly define the problem.</li>
+                    <li>Collect representative data.</li>
+                    <li>Clean and preprocess data.</li>
+                    <li>Split data correctly.</li>
+                    <li>Select suitable algorithms.</li>
+                    <li>Tune hyperparameters.</li>
+                    <li>Evaluate using multiple metrics.</li>
+                    <li>Compare with baseline models.</li>
+                    <li>Document experiments.</li>
+                    <li>Ensure reproducibility (e.g., fixing random seeds).</li>
+                </ol>
+
+                <!-- SECTION 4 QUIZ GATE -->
+                <div class="quiz-box" id="quiz-box-m4">
+                    <h3 style="color: #4338ca; margin-top: 0;">🚀 Section 4 Evaluation Gate</h3>
+                    <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 15px;">Complete this quiz. Score <strong>4 or more marks (&ge; 4/10)</strong> to unlock Section 5.</p>
+                    
+                    <div id="slider-content-area-m4"></div>
+
+                    <div class="quiz-navigation-controls">
+                        <button id="prev-btn-m4" onclick="shiftQuizSlide('m4', -1)">Previous</button>
+                        <span style="font-weight: 600; color: #4b5563; font-size: 0.85rem;" id="slide-index-txt-m4">Question 1 / 10</span>
+                        <button id="next-btn-m4" onclick="shiftQuizSlide('m4', 1)">Next</button>
+                    </div>
+
+                    <div class="quiz-action-area">
+                        <button id="submit-btn-m4" style="background: #10b981;" onclick="evaluateQuiz('m4')">Submit Examination</button>
+                        <button id="retake-btn-m4" style="background: #f59e0b; display: none;" onclick="retakeQuiz('m4')">🔄 Retake Quiz</button>
+                        <button id="review-btn-m4" class="review-btn" onclick="toggleReviewMode('m4')">Review Mistakes</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback-m4"></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- MODULE 5 -->
+        <div id="page-m5" class="app-page">
+            <section>
+                <h2>5. Data Preparation</h2>
+                
+                <h3>Data Cleaning &amp; Preprocessing</h3>
+                <ul>
+                    <li>Objectives: Remove duplicates, handle missing values, filter noise, correct data types.</li>
+                    <li>Handling missing values: Delete records, Mean Imputation, Median Imputation, Mode Imputation, or KNN Imputation.</li>
+                </ul>
+
+                <h3>Feature Scaling</h3>
+                <ul>
+                    <li><strong>Normalization (Min-Max Scaling):</strong> Rescales data into range [0, 1]. Formula: <code>x' = (x - x_min) / (x_max - x_min)</code>. Ideal for Neural Networks.</li>
+                    <li><strong>Standardization (Z-score):</strong> Rescales data to mean = 0 and standard deviation = 1. Formula: <code>z = (x - &mu;) / &sigma;</code>. Ideal for Logistic Regression, SVM, and distance-based methods.</li>
+                </ul>
+
+                <h3>Feature Engineering &amp; Selection</h3>
+                <ul>
+                    <li><strong>Feature Engineering:</strong> Creating new variables (e.g., <code>BMI = Weight / Height&sup2;</code>, age groups, date parsing, polynomial features).</li>
+                    <li><strong>Feature Selection:</strong> Removing irrelevant/redundant variables via Pearson Correlation, Chi-Square tests, Mutual Information, and Recursive Feature Elimination (RFE).</li>
+                    <li><strong>Pearson Correlation Coefficient (r):</strong> Measures linear correlation bounded in <code>[-1, 1]</code>.</li>
+                </ul>
+
+                <!-- SECTION 5 QUIZ GATE -->
+                <div class="quiz-box" id="quiz-box-m5">
+                    <h3 style="color: #4338ca; margin-top: 0;">🚀 Section 5 Evaluation Gate</h3>
+                    <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 15px;">Complete this quiz. Score <strong>4 or more marks (&ge; 4/10)</strong> to unlock Section 6.</p>
+                    
+                    <div id="slider-content-area-m5"></div>
+
+                    <div class="quiz-navigation-controls">
+                        <button id="prev-btn-m5" onclick="shiftQuizSlide('m5', -1)">Previous</button>
+                        <span style="font-weight: 600; color: #4b5563; font-size: 0.85rem;" id="slide-index-txt-m5">Question 1 / 10</span>
+                        <button id="next-btn-m5" onclick="shiftQuizSlide('m5', 1)">Next</button>
+                    </div>
+
+                    <div class="quiz-action-area">
+                        <button id="submit-btn-m5" style="background: #10b981;" onclick="evaluateQuiz('m5')">Submit Examination</button>
+                        <button id="retake-btn-m5" style="background: #f59e0b; display: none;" onclick="retakeQuiz('m5')">🔄 Retake Quiz</button>
+                        <button id="review-btn-m5" class="review-btn" onclick="toggleReviewMode('m5')">Review Mistakes</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback-m5"></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- MODULE 6 -->
+        <div id="page-m6" class="app-page">
+            <section>
+                <h2>6. Data Visualization Techniques</h2>
+                
+                <h3>Key Plotting Methods</h3>
+                <ul>
+                    <li><strong>Histograms (<code>plt.hist</code>):</strong> Displays frequency distribution of continuous numerical data partitioned into bins.</li>
+                    <li><strong>Bar Plots (<code>plt.bar</code>):</strong> Compares discrete categorical values or metric group summaries.</li>
+                    <li><strong>Box Plots (<code>plt.boxplot</code>):</strong> Displays 5-number summaries (Min, Q1, Median, Q3, Max) and identifies outliers.</li>
+                    <li><strong>Scatter Plots (<code>plt.scatter</code>):</strong> Plots individual points along 2 continuous feature axes to observe correlations.</li>
+                    <li><strong>Trend Lines:</strong> Best-fit regression lines overlaid on scatter plots (e.g., using <code>np.polyfit(x, y, 1)</code>).</li>
+                </ul>
+
+                <!-- SECTION 6 QUIZ GATE -->
+                <div class="quiz-box" id="quiz-box-m6">
+                    <h3 style="color: #4338ca; margin-top: 0;">🚀 Section 6 Evaluation Gate</h3>
+                    <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 15px;">Complete this final evaluation to complete the Machine Learning course map.</p>
+                    
+                    <div id="slider-content-area-m6"></div>
+
+                    <div class="quiz-navigation-controls">
+                        <button id="prev-btn-m6" onclick="shiftQuizSlide('m6', -1)">Previous</button>
+                        <span style="font-weight: 600; color: #4b5563; font-size: 0.85rem;" id="slide-index-txt-m6">Question 1 / 10</span>
+                        <button id="next-btn-m6" onclick="shiftQuizSlide('m6', 1)">Next</button>
+                    </div>
+
+                    <div class="quiz-action-area">
+                        <button id="submit-btn-m6" style="background: #10b981;" onclick="evaluateQuiz('m6')">Submit Examination</button>
+                        <button id="retake-btn-m6" style="background: #f59e0b; display: none;" onclick="retakeQuiz('m6')">🔄 Retake Quiz</button>
+                        <button id="review-btn-m6" class="review-btn" onclick="toggleReviewMode('m6')">Review Mistakes</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback-m6"></div>
+                </div>
+
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="reset-btn" onclick="clearSavedProgress()">Clear Saved Progress &amp; Reset Map Locks</button>
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <script>
+        const TOTAL_TOPICS_COUNT = 6; 
+        const TOPIC_ORDER = ['m1', 'm2', 'm3', 'm4', 'm5', 'm6'];
+
+        // Question Pools
+        const m1QuestionPool = [
+            { q: "Artificial Intelligence is defined as the science of building systems capable of performing tasks requiring ______.", o: ["High electrical power", "Human intelligence", "Quantum computing", "Manual explicit rules"], a: 1 },
+            { q: "Which of the following correctly reflects the hierarchy of AI, ML, and DL?", o: ["ML contains AI, which contains DL", "DL contains ML, which contains AI", "AI contains ML, which contains DL", "AI, ML, and DL are non-overlapping"], a: 2 },
+            { q: "Who defined Machine Learning in 1959 as giving computers the ability to learn without being explicitly programmed?", o: ["Tom Mitchell", "Alan Turing", "Arthur Samuel", "Alex Krizhevsky"], a: 2 },
+            { q: "In Tom Mitchell's formal definition of Machine Learning, 'T' stands for ______.", o: ["Training", "Task", "Test", "Time"], a: 1 },
+            { q: "In Tom Mitchell's formal definition, 'E' represents ______.", o: ["Error", "Evaluation", "Experience", "Estimation"], a: 2 },
+            { q: "What is the mathematical representation of learning in Tom Mitchell's definition?", o: ["Learning = f(E, T, P)", "Learning = E + T + P", "Learning = (E * T) / P", "Learning = Loss(E, T)"], a: 0 },
+            { q: "Which of the following represents the workflow of Traditional Programming?", o: ["Input + Output -> Rules", "Input + Program -> Output", "Data + Model -> Training", "Output + Program -> Input"], a: 1 },
+            { q: "Which of the following represents the workflow of Machine Learning during training?", o: ["Input + Program -> Output", "Input + Output -> Learning (Model)", "Output + Rules -> Program", "Input + Compiler -> Output"], a: 1 },
+            { q: "Which historical milestone in Machine Learning occurred in 1950?", o: ["Perceptron by Rosenblatt", "Alan Turing Test", "Backpropagation algorithm", "IBM Deep Blue victory"], a: 1 },
+            { q: "Rosenblatt developed the Perceptron in which year?", o: ["1950", "1957", "1986", "2006"], a: 1 },
+            { q: "The revival of Backpropagation occurred in which year according to the history timeline?", o: ["1957", "1986", "1997", "2012"], a: 1 },
+            { q: "IBM Deep Blue defeated world chess champion Garry Kasparov in ______.", o: ["1986", "1997", "2006", "2016"], a: 1 },
+            { q: "Which architecture won the ImageNet competition in 2012, sparking the modern deep learning boom?", o: ["Perceptron", "AlexNet", "AlphaGo", "ChatGPT"], a: 1 },
+            { q: "DeepMind's AlphaGo defeated the world champion in Go in which year?", o: ["2006", "2012", "2016", "2022"], a: 2 },
+            { q: "ChatGPT was released in which milestone year according to the presentation timeline?", o: ["2016", "2018", "2020", "2022"], a: 3 },
+            { q: "What is the correct order of steps in the standard Machine Learning Pipeline?", o: ["Deployment -> Testing -> Training -> Preprocessing -> Collection -> Problem", "Problem -> Data Collection -> Preprocessing -> Training -> Testing -> Deployment", "Preprocessing -> Problem -> Training -> Deployment -> Testing", "Data Collection -> Deployment -> Testing -> Training"], a: 1 },
+            { q: "Which of the following is NOT an application domain of Machine Learning explicitly listed in the module?", o: ["Healthcare", "Autonomous Vehicles", "Manual Quantum Wiring", "Cyber Security"], a: 2 },
+            { q: "In mathematical foundations, a single real number x = 5 is classified as a ______.", o: ["Vector", "Matrix", "Scalar", "Tensor"], a: 2 },
+            { q: "A 1D column array of numerical values x = [x1, x2, x3]^T is a ______.", o: ["Scalar", "Vector", "Matrix", "Determinant"], a: 1 },
+            { q: "Machine learning datasets are mathematically represented as ______.", o: ["Scalars", "Boolean flags", "Matrices", "Single strings"], a: 2 },
+            { q: "In a house price prediction dataset, the vector x = [x1, x2, x3, x4] containing area, bedrooms, age, and parking is called a ______.", o: ["Target vector", "Feature Vector", "Error vector", "Scalar metric"], a: 1 },
+            { q: "In the dataset expression D = {(xi, yi)}, what does N represent?", o: ["Number of features", "Number of training samples", "Number of target classes", "Number of test folds"], a: 1 },
+            { q: "What does 'd' represent in xi in R^d?", o: ["Number of samples", "Number of features", "Number of iterations", "Distance metric"], a: 1 },
+            { q: "What is the formula for Euclidean Distance between two vectors x and y?", o: ["sum(|xi - yi|)", "sqrt(sum((xi - yi)^2))", "max(|xi - yi|)", "sum(xi*yi) / (||x||*||y||)"], a: 1 },
+            { q: "What is the formula for Manhattan Distance?", o: ["sum(|xi - yi|)", "sqrt(sum((xi - yi)^2))", "sum((xi - yi)^2)", "(1/n) * sum(xi - yi)"], a: 0 },
+            { q: "Which metric measures the arithmetic central average of a feature dataset?", o: ["Variance", "Mean", "Standard Deviation", "Range"], a: 1 },
+            { q: "What is the formula for sample Variance (sigma^2)?", o: ["(1/n) * sum(xi - mu)", "(1/n) * sum((xi - mu)^2)", "sqrt((1/n) * sum((xi - mu)^2))", "max(x) - min(x)"], a: 1 },
+            { q: "Standard Deviation (sigma) is mathematically defined as ______.", o: ["sigma^2", "sqrt(sigma^2)", "1 / sigma^2", "log(sigma^2)"], a: 1 },
+            { q: "Why do we need Machine Learning according to the course slides?", o: ["To increase manual hardcoded programming", "To discover hidden patterns and handle large datasets automatically", "To replace hardware memory chips", "To eliminate computer operating systems"], a: 1 },
+            { q: "In a handwritten digit recognition system, the task T is ______.", o: ["Percentage of correctly recognized digits", "Database of scanned images", "Classifying handwritten digit images into digits 0-9", "Execution speed of CPU"], a: 2 },
+            { q: "In the same handwritten digit recognition system, the performance measure P is ______.", o: ["Raw image pixel array", "Accuracy of correct digit classifications", "Manual coding time", "Number of training samples"], a: 1 },
+            { q: "The experience E in a spam filter model consists of ______.", o: ["Rule set written by administrator", "Historical emails labeled as spam or not spam", "Time taken to route an email", "Accuracy metric score"], a: 1 },
+            { q: "Linear Algebra, Probability, Statistics, and Calculus form the ______.", o: ["Hardware prerequisites", "Mathematical Foundations of Machine Learning", "Python syntax rules", "Frontend user interfaces"], a: 1 },
+            { q: "Which of the following is an expert system example of early AI?", o: ["Rule-based medical diagnostic lookup", "Convolutional Neural Network", "Deep Q-Network", "Transformer language model"], a: 0 },
+            { q: "Machine learning models predict output for new input by using the ______.", o: ["Hardcoded IF-ELSE statements", "Learned Mapping Model f(x)", "SQL Database query string", "Raw uncleaned CSV file"], a: 1 },
+            { q: "Which Python library is primarily used for matrix and multi-dimensional numerical computing in ML?", o: ["Matplotlib", "NumPy", "Flask", "Django"], a: 1 },
+            { q: "Which library is used for manipulating structured data frames in Python?", o: ["NumPy", "Pandas", "PyGame", "Scipy"], a: 1 },
+            { q: "Which library is used for building and fitting ML algorithms like Decision Trees in Python?", o: ["Matplotlib", "Scikit-Learn", "Seaborn", "Requests"], a: 1 },
+            { q: "The process of predicting continuous target values is known as ______.", o: ["Classification", "Regression", "Clustering", "Dimensionality Reduction"], a: 1 },
+            { q: "The deployment phase in the ML pipeline refers to ______.", o: ["Cleaning missing values", "Integrating the trained model into a production environment", "Splitting data into 80:20 ratios", "Calculating Euclidean distance"], a: 1 }
+        ];
+
+        const m2QuestionPool = [
+            { q: "Supervised learning datasets are mathematically defined as ______.", o: ["D = {x1, x2, ..., xn}", "D = {(xi, yi)}", "D = Du", "D = Rt + At"], a: 1 },
+            { q: "The main goal of Supervised Learning is to learn a mapping function ______.", o: ["f(x) -> y", "f(y) -> x", "f(x) -> x'", "f(R) -> A"], a: 0 },
+            { q: "Which learning paradigm predicts continuous numerical outputs?", o: ["Classification", "Regression", "Clustering", "Reinforcement Learning"], a: 1 },
+            { q: "Regression models are evaluated using which loss function according to the slides?", o: ["Accuracy", "Confusion Matrix", "Mean Squared Error (MSE)", "Discounted Reward"], a: 2 },
+            { q: "What is the mathematical formula for Mean Squared Error (MSE)?", o: ["(1/n) * sum(yi - yhat_i)", "(1/n) * sum((yi - yhat_i)^2)", "sqrt(sum(yi - yhat_i))", "(TP + TN) / Total"], a: 1 },
+            { q: "Classification algorithms are used to predict ______.", o: ["Continuous prices", "Discrete classes/labels", "Unlabeled clusters", "Environment actions"], a: 1 },
+            { q: "Predicting whether a patient has a disease (Cancer / Healthy) is an example of ______.", o: ["Regression", "Classification", "Unsupervised Clustering", "Reinforcement Learning"], a: 1 },
+            { q: "Temperature prediction and stock price forecasting are real-world applications of ______.", o: ["Classification", "Regression", "Clustering", "Association Rule Mining"], a: 1 },
+            { q: "Unsupervised learning operates on dataset D defined as ______.", o: ["D = {(xi, yi)}", "D = {x1, x2, ..., xn}", "D = Dl + Du", "D = {(At, St)}"], a: 1 },
+            { q: "Which of the following is a core task of Unsupervised Learning?", o: ["Disease Diagnosis", "House Price Prediction", "Clustering", "Spam Detection"], a: 2 },
+            { q: "Customer segmentation and market basket analysis are applications of ______.", o: ["Supervised Regression", "Supervised Classification", "Unsupervised Learning", "Reinforcement Learning"], a: 2 },
+            { q: "Semi-Supervised Learning datasets combine ______.", o: ["Features and Rewards", "Labeled data (Dl) and Unlabeled data (Du)", "Training error and Test error", "Scalars and Matrices"], a: 1 },
+            { q: "What is a primary application of Semi-Supervised Learning listed in the syllabus?", o: ["Stock prices", "Medical Imaging / Speech Recognition", "Chess engines", "House price estimation"], a: 1 },
+            { q: "In Reinforcement Learning, the decision-maker interacting with the environment is called the ______.", o: ["Model", "Agent", "Cluster", "Regressor"], a: 1 },
+            { q: "What feedback does the environment return to the Agent in Reinforcement Learning?", o: ["Target label y", "Reward + State", "Confusion matrix", "Mean squared error"], a: 1 },
+            { q: "What is the objective function of Reinforcement Learning?", o: ["min (1/n) * sum((yi - yhat_i)^2)", "max sum(gamma^t * Rt)", "Accuracy = (TP + TN) / Total", "d(x,y) = sqrt(sum((xi - yi)^2))"], a: 1 },
+            { q: "What does gamma represent in the Reinforcement Learning reward function?", o: ["Learning rate", "Discount factor", "Error margin", "Feature weight"], a: 1 },
+            { q: "Autonomous driving and robotics are prominent applications of ______.", o: ["Supervised Classification", "Unsupervised Association", "Reinforcement Learning", "Semi-supervised Regression"], a: 2 },
+            { q: "Which learning paradigm uses 'Rewards' as its primary feedback mechanism?", o: ["Supervised", "Unsupervised", "Semi-supervised", "Reinforcement"], a: 3 },
+            { q: "Which learning paradigm has NO target labels in its dataset?", o: ["Supervised", "Unsupervised", "Semi-supervised", "Regression"], a: 1 },
+            { q: "Spam Detection is categorized under which ML type?", o: ["Unsupervised Clustering", "Supervised Classification", "Reinforcement Learning", "Dimensionality Reduction"], a: 1 },
+            { q: "Image Compression is listed as an application of ______.", o: ["Supervised Regression", "Unsupervised Learning", "Reinforcement Learning", "Semi-Supervised Learning"], a: 1 },
+            { q: "Credit Risk Prediction is an example of ______.", o: ["Unsupervised Clustering", "Supervised Learning", "Reinforcement Learning", "Association Rule Mining"], a: 1 },
+            { q: "A simple linear model equation for regression given in the slides is ______.", o: ["y = wx + b", "y = TP / (TP + FP)", "y = max(Rt)", "y = x1 + x2 + ... + xn"], a: 0 },
+            { q: "The ratio (TP + TN) / (TP + TN + FP + FN) measures ______.", o: ["Mean Squared Error", "Accuracy", "Discounted Reward", "Euclidean distance"], a: 1 },
+            { q: "Which table summarizes predictions versus actual classes in classification problems?", o: ["Feature matrix", "Confusion Matrix", "Correlation matrix", "Distance table"], a: 1 },
+            { q: "Finding frequent itemsets in market baskets (e.g., milk and bread bought together) uses ______.", o: ["Association Rule Mining", "Linear Regression", "Logistic Regression", "Reinforcement Policy"], a: 0 },
+            { q: "Which of the following aims at 'Pattern Discovery' as its primary goal?", o: ["Supervised Learning", "Unsupervised Learning", "Reinforcement Learning", "Classification"], a: 1 },
+            { q: "Which learning paradigm aims at making 'Sequential Decisions'?", o: ["Supervised Learning", "Unsupervised Learning", "Reinforcement Learning", "Semi-supervised Learning"], a: 2 },
+            { q: "In classification, if y belongs to {0, 1}, the task is called ______.", o: ["Multi-class classification", "Binary classification", "Continuous regression", "Unsupervised clustering"], a: 1 },
+            { q: "Linear Regression and Polynomial Regression belong to ______.", o: ["Unsupervised Learning", "Supervised Learning (Regression)", "Reinforcement Learning", "Association Analysis"], a: 1 },
+            { q: "K-Means and Agglomerative Hierarchical algorithms are examples of ______.", o: ["Supervised Classification", "Unsupervised Clustering", "Reinforcement Learning", "Regression"], a: 1 },
+            { q: "Which learning type is most effective when labeling data requires expensive expert doctor annotation?", o: ["Pure Supervised Learning", "Semi-Supervised Learning", "Pure Unsupervised Learning", "Association Mining"], a: 1 },
+            { q: "What is Dl in Semi-Supervised datasets?", o: ["Unlabeled Data", "Labeled Data", "Linear Distance", "Loss Function"], a: 1 },
+            { q: "The game-playing AI 'AlphaGo' is a landmark example of ______.", o: ["Supervised Regression", "Reinforcement Learning", "Unsupervised Clustering", "Association Rule Mining"], a: 1 },
+            { q: "In regression, yhat_i represents ______.", o: ["Actual true target value", "Predicted value by the model", "Feature mean", "Error variance"], a: 1 },
+            { q: "In classification, a True Positive (TP) means ______.", o: ["Model correctly predicted positive class", "Model incorrectly predicted positive class", "Model correctly predicted negative class", "Model failed to run"], a: 0 },
+            { q: "Disease Diagnosis (e.g., Healthy vs. Sick) is an application of ______.", o: ["Regression", "Classification", "Clustering", "Dimensionality Reduction"], a: 1 },
+            { q: "Sales Forecasting is an application of ______.", o: ["Classification", "Regression", "Clustering", "Reinforcement Learning"], a: 1 },
+            { q: "An Agent choosing an Action to update the Environment state is the core loop of ______.", o: ["Supervised Learning", "Unsupervised Learning", "Reinforcement Learning", "Data Preprocessing"], a: 2 }
+        ];
+
+        const m3QuestionPool = [
+            { q: "Which famous phrase highlights the risk of training models on bad or corrupt data?", o: ["High Bias, High Variance", "Garbage In, Garbage Out", "Overfitting is Key", "Linear models fail"], a: 1 },
+            { q: "Small datasets often lead to poor ______.", o: ["Compilation", "Generalization", "File loading", "Syntax validation"], a: 1 },
+            { q: "Which of the following is an example of poor quality data?", o: ["Cleaned numeric values", "Duplicate records and incorrect labels", "Scaled features", "Balanced classes"], a: 1 },
+            { q: "Deleting records, Mean imputation, and KNN imputation are solutions for ______.", o: ["Overfitting", "Missing Values", "High dimensionality", "Low learning rates"], a: 1 },
+            { q: "What is the mathematical model for noisy data given in the slides?", o: ["y = x * epsilon", "y = x + epsilon", "y = x / epsilon", "y = epsilon^2"], a: 1 },
+            { q: "In the noisy data model y = x + epsilon, what does epsilon represent?", o: ["Exact Target", "Random Error / Noise", "Learning Rate", "Scaling Factor"], a: 1 },
+            { q: "Sensor errors, typing mistakes, and transmission glitches cause ______.", o: ["Feature scaling", "Noisy data", "Underfitting", "High accuracy"], a: 1 },
+            { q: "A dataset with d = 1000 features suffers from ______.", o: ["Underfitting", "High Dimensional Data / Curse of Dimensionality", "Low memory usage", "High bias"], a: 1 },
+            { q: "Which of the following is a recommended solution for High Dimensional Data?", o: ["Adding more noisy features", "Principal Component Analysis (PCA) & Feature Selection", "Mean imputation", "Removing all rows"], a: 1 },
+            { q: "Overfitting occurs when a model ______.", o: ["Is too simple", "Memorizes training data instead of learning general patterns", "Has high training error", "Fails to fit training samples"], a: 1 },
+            { q: "An overfitted model exhibits ______.", o: ["High training error and low testing error", "Very low training error and high testing error", "High training error and high testing error", "Zero training and testing error"], a: 1 },
+            { q: "Overfitting is characterized by ______.", o: ["High Bias", "High Variance", "Low Complexity", "Zero parameters"], a: 1 },
+            { q: "Underfitting occurs when a model is ______.", o: ["Too complex", "Too simple and fails to capture the data trend", "Memorizing noise", "Regularized with zero weights"], a: 1 },
+            { q: "An underfitted model exhibits ______.", o: ["Low training error and high testing error", "High training error and high testing error", "Low training error and low testing error", "Zero bias"], a: 1 },
+            { q: "Underfitting is characterized by ______.", o: ["High Bias", "High Variance", "High Complexity", "Over-parameterization"], a: 0 },
+            { q: "Optimal fitting achieves ______.", o: ["High Bias and High Variance", "Low Bias and Low Variance", "High Bias and Low Variance", "Low Bias and High Variance"], a: 1 },
+            { q: "What is the total Prediction Error equation according to the slides?", o: ["Error = Bias + Variance", "Error = Bias^2 + Variance + Noise", "Error = sqrt(Bias) + Noise", "Error = MSE * Accuracy"], a: 1 },
+            { q: "A simple model generally has ______.", o: ["Low Bias, High Variance", "High Bias, Low Variance", "Low Bias, Low Variance", "High Bias, High Variance"], a: 1 },
+            { q: "A complex model generally has ______.", o: ["High Bias, Low Variance", "Low Bias, High Variance", "High Bias, High Variance", "Balanced Bias and Variance"], a: 1 },
+            { q: "In the Training Error vs. Testing Error curve plot, testing error turns upward when ______.", o: ["Model complexity becomes too simple", "Model starts overfitting high complexity noise", "Training error increases", "Data size increases"], a: 1 },
+            { q: "Optimal model complexity corresponds to the point where ______.", o: ["Training error is zero", "Testing error reaches its minimum", "Testing error equals 1.0", "Bias is maximum"], a: 1 },
+            { q: "Which of the following is NOT listed as a method to avoid Overfitting?", o: ["Collect more data", "Regularization", "Early Stopping", "Removing all validation data"], a: 3 },
+            { q: "Regularization avoids overfitting by adding a penalty term to the loss function J(theta) = Loss + ______.", o: ["lambda * ||theta||^2", "theta / lambda", "Accuracy * lambda", "sqrt(theta)"], a: 0 },
+            { q: "In regularized loss J(theta) = Loss + lambda * ||theta||^2, what controls penalty strength?", o: ["theta", "lambda", "J", "epsilon"], a: 1 },
+            { q: "Dropout is a technique used to prevent overfitting specifically in ______.", o: ["Linear Regression", "Deep Learning / Neural Networks", "K-Means", "Naive Bayes"], a: 1 },
+            { q: "Ensemble Learning helps avoid overfitting by ______.", o: ["Using a single decision tree", "Combining predictions from multiple models", "Deleting half the features", "Setting learning rate to zero"], a: 1 },
+            { q: "Cross-validation helps detect overfitting by evaluating models on ______.", o: ["The training data repeatedly", "Unseen validation folds", "Uncleaned raw data", "Hardware benchmarks"], a: 1 },
+            { q: "Imbalanced datasets occur when ______.", o: ["Feature values are unscaled", "One target class significantly outnumbers other classes", "Missing values exist in features", "Test set size is larger than train set"], a: 1 },
+            { q: "Computational Complexity becomes a challenge when ______.", o: ["Datasets and models scale very large", "Using simple linear regression", "Dataset has 10 rows", "Accuracy is 100%"], a: 0 },
+            { q: "Human typing mistakes and OCR scanning errors in text datasets are examples of ______.", o: ["High variance", "Noisy Data", "High dimensionality", "Underfitting"], a: 1 },
+            { q: "Sparse data matrices and poor generalization are major problems caused by ______.", o: ["Missing values", "Curse of Dimensionality", "Low feature counts", "Oversampling"], a: 1 },
+            { q: "If a decision tree grows without depth limits, fitting every training point perfectly, it suffers from ______.", o: ["Underfitting", "Overfitting (High Variance)", "High Bias", "Low complexity"], a: 1 },
+            { q: "If a straight line model is fitted to highly parabolic curved data, it suffers from ______.", o: ["Overfitting", "Underfitting (High Bias)", "High Variance", "Data leakage"], a: 1 },
+            { q: "Early stopping prevents overfitting by halting training when ______.", o: ["Training loss reaches zero", "Validation error stops improving and starts rising", "Epoch count reaches 1,000,000", "Dataset is deleted"], a: 1 },
+            { q: "What happens to training error as model complexity increases continuously?", o: ["It increases linearly", "It decreases continuously towards zero", "It remains constant", "It forms a U-shape curve"], a: 1 },
+            { q: "What shape does testing error typically form as model complexity increases?", o: ["Straight horizontal line", "Continuous decreasing curve", "U-shaped curve (decreases then increases)", "Inverted U-shape"], a: 2 },
+            { q: "Which challenge involves xi vectors containing thousands of irrelevant variables?", o: ["Missing Values", "High Dimensional Data", "Low sample size", "Underfitting"], a: 1 },
+            { q: "Mean Imputation replaces missing feature values with the ______.", o: ["Most frequent label", "Arithmetic average of available column values", "Middle ranked value", "Zero constant"], a: 1 },
+            { q: "KNN Imputation estimates missing values based on ______.", o: ["Target label means", "Nearest neighbor sample feature values", "Random selection", "Global dataset variance"], a: 1 },
+            { q: "Balancing model complexity to achieve minimal generalization error is known as managing the ______.", o: ["Data pipeline", "Bias-Variance Tradeoff", "Feature extraction", "Euclidean distance"], a: 1 }
+        ];
+
+        const m4QuestionPool = [
+            { q: "What is the primary objective of model testing and validation?", o: ["To maximize training error", "To estimate generalization ability on unseen data", "To replace feature engineering", "To eliminate computer code"], a: 1 },
+            { q: "Generalization error E_gen is mathematically expressed as ______.", o: ["E[f(x) - y]", "f(x) + y", "TP / FP", "MAE * MSE"], a: 0 },
+            { q: "Which dataset partition is used exclusively to learn model parameters theta?", o: ["Validation Set", "Testing Set", "Training Set", "Outlier Set"], a: 2 },
+            { q: "Which dataset partition is used for hyperparameter tuning and model architecture selection?", o: ["Training Set", "Validation Set", "Testing Set", "Unlabeled Set"], a: 1 },
+            { q: "Learning Rate, Number of Trees, and Max Depth are examples of ______.", o: ["Learned parameters theta", "Hyperparameters", "Evaluation metrics", "Dataset features"], a: 1 },
+            { q: "Final evaluation on the Testing set should ideally be performed ______.", o: ["Iteratively during every epoch", "Only once at the end of development", "Before data splitting", "During feature scaling"], a: 1 },
+            { q: "What is a standard recommended Train-Validation-Test split ratio?", o: ["10% - 10% - 80%", "70% - 15% - 15%", "33% - 33% - 33%", "50% - 0% - 50%"], a: 1 },
+            { q: "A typical two-way Hold-Out split ratio for Train-Test is ______.", o: ["50:50", "80:20", "10:90", "99:1"], a: 1 },
+            { q: "What is a major disadvantage of Hold-Out Validation?", o: ["High computational cost", "Performance heavily depends on random split (High Variance)", "Difficult to implement", "Cannot calculate accuracy"], a: 1 },
+            { q: "In K-Fold Cross Validation, the dataset is divided into ______.", o: ["K unequal random parts", "K equal-sized subsets/folds", "K^2 subsets", "Two parts always"], a: 1 },
+            { q: "How is the final performance score calculated in K-Fold Cross Validation?", o: ["Taking the maximum fold score", "Taking the minimum fold score", "Averaging scores across all K folds", "Multiplying all fold scores"], a: 2 },
+            { q: "What are the most common values chosen for K in K-Fold Cross Validation?", o: ["K=2 or K=3", "K=5 or K=10", "K=50 or K=100", "K=1"], a: 1 },
+            { q: "Leave-One-Out Cross Validation (LOOCV) is a special case of K-Fold where K equals ______.", o: ["K = 1", "K = 10", "K = N (Number of samples)", "K = d (Number of features)"], a: 2 },
+            { q: "What is the primary disadvantage of LOOCV?", o: ["High bias", "Computationally expensive for large N", "Insufficient training data", "Cannot handle numeric features"], a: 1 },
+            { q: "What is the formula for Classification Precision?", o: ["(TP + TN) / Total", "TP / (TP + FP)", "TP / (TP + FN)", "TN / (TN + FP)"], a: 1 },
+            { q: "What is the formula for Classification Recall?", o: ["TP / (TP + FP)", "TP / (TP + FN)", "FP / (TP + FN)", "(TP + TN) / Total"], a: 1 },
+            { q: "F1 Score is mathematically defined as ______.", o: ["(P + R) / 2", "(2 * P * R) / (P + R)", "P * R", "sqrt(P * R)"], a: 1 },
+            { q: "What is the formula for Mean Absolute Error (MAE)?", o: ["(1/n) * sum((y - yhat)^2)", "(1/n) * sum(|y - yhat|)", "sqrt((1/n) * sum((y - yhat)^2))", "1 - (SS_res / SS_tot)"], a: 1 },
+            { q: "What is the formula for Root Mean Squared Error (RMSE)?", o: ["MSE^2", "sqrt(MSE)", "1 / MSE", "log(MSE)"], a: 1 },
+            { q: "What metric measures the Coefficient of Determination in regression?", o: ["F1 Score", "R^2 = 1 - (SS_res / SS_tot)", "Accuracy", "Recall"], a: 1 },
+            { q: "An R^2 score of 1.0 indicates ______.", o: ["Worst possible performance", "Perfect fit / model explains all target variance", "High mean absolute error", "50% classification error"], a: 1 },
+            { q: "Which Scikit-Learn function splits datasets into training and testing arrays?", o: ["cross_val_score()", "train_test_split()", "SimpleImputer()", "StandardScaler()"], a: 1 },
+            { q: "In train_test_split(X, y, test_size=0.2, random_state=42), what does random_state=42 ensure?", o: ["42% accuracy", "Reproducibility of the random split", "42 features selected", "42 cross validation folds"], a: 1 },
+            { q: "Which Scikit-Learn function performs automated cross-validation scoring?", o: ["cross_val_score()", "fit_transform()", "score_model()", "predict_split()"], a: 0 },
+            { q: "What is the first rule in the Guidelines for ML Experiments?", o: ["Collect data", "Clearly define the problem", "Tune hyperparameters", "Deploy model"], a: 1 },
+            { q: "Why should baseline models be included in ML experiments?", o: ["To increase execution time", "To provide a benchmark for evaluating complex model improvements", "To clean missing data", "To perform feature scaling"], a: 1 },
+            { q: "Documenting experiments and fixing random seeds ensures ______.", o: ["High accuracy", "Reproducibility", "Zero overfitting", "Fast deployment"], a: 1 },
+            { q: "When K=5 in cross-validation, how many total training iterations occur?", o: ["1", "5", "10", "N"], a: 1 },
+            { q: "In a 5-fold cross validation on 100 samples, how many samples are in each testing fold?", o: ["10", "20", "50", "80"], a: 1 },
+            { q: "Objective function minimization in training is expressed as ______.", o: ["theta* = arg min J(theta)", "theta* = arg max Accuracy", "theta* = Mean(X)", "theta* = RMSE"], a: 0 },
+            { q: "Misclassifying a fraudulent transaction as legitimate is a critical error evaluated by ______.", o: ["Precision", "Recall / Confusion Matrix", "R^2", "MAE"], a: 1 },
+            { q: "What does SS_res represent in the R^2 formula?", o: ["Total sum of squares", "Residual sum of squared errors", "Scaled sample size", "Standardized variance"], a: 1 },
+            { q: "Which metric penalizes large outlier errors more heavily due to squaring?", o: ["MAE", "MSE", "Accuracy", "Precision"], a: 1 },
+            { q: "A model scoring high precision but low recall means ______.", o: ["Many false positives, few false negatives", "Few false positives, but missed many actual positive instances", "Perfect performance", "High RMSE"], a: 1 },
+            { q: "The harmonic mean is used in F1 score instead of simple arithmetic average because ______.", o: ["It penalizes extreme imbalances between Precision and Recall", "It is easier to calculate", "It ignores false positives", "It scales values between -1 and +1"], a: 0 },
+            { q: "In Scikit-Learn cross_val_score(model, X, y, cv=5), what does cv=5 specify?", o: ["5 features", "5-Fold Cross Validation", "5% test size", "5 iterations per epoch"], a: 1 },
+            { q: "If training accuracy is 99% and test accuracy is 60%, the experiment indicates ______.", o: ["Underfitting", "Overfitting", "Optimal fitting", "High bias"], a: 1 },
+            { q: "Which guidelines step follows 'Collect representative data'?", o: ["Deploy model", "Clean and preprocess data", "Document experiments", "Tune hyperparameters"], a: 1 },
+            { q: "Generalization error measures how well the model predicts on ______.", o: ["Training data", "Unseen future data", "Deleted data", "Synthetic noise"], a: 1 },
+            { q: "Evaluating a model using multiple metrics (e.g., Precision, Recall, F1) is necessary because ______.", o: ["Accuracy alone can be misleading on imbalanced data", "Single metrics crash Scikit-Learn", "It speeds up gradient descent", "It normalizes feature scales"], a: 0 }
+        ];
+
+        const m5QuestionPool = [
+            { q: "Real-world datasets are often described as ______.", o: ["Perfectly formatted and clean", "Incomplete, inconsistent, and noisy", "Pre-normalized", "Free of missing values"], a: 1 },
+            { q: "What is the primary objective of Data Cleaning?", o: ["To convert all variables to string text", "To remove duplicate, inconsistent, or noisy records and correct types", "To run gradient descent", "To deploy web APIs"], a: 1 },
+            { q: "Which Pandas method checks for total missing values per column?", o: ["df.describe()", "df.isnull().sum()", "df.corr()", "df.shape()"], a: 1 },
+            { q: "Scikit-Learn's SimpleImputer(strategy='mean') replaces missing values with the ______.", o: ["Mode", "Column arithmetic mean", "Median", "Zero"], a: 1 },
+            { q: "Which imputation strategy is most suitable for categorical text missing features?", o: ["Strategy='mean'", "Strategy='most_frequent' (Mode)", "Strategy='median'", "Z-score"], a: 1 },
+            { q: "What formula creates the Body Mass Index (BMI) feature during feature engineering?", o: ["BMI = Weight * Height", "BMI = Weight / Height^2", "BMI = Height / Weight", "BMI = Weight^2 + Height"], a: 1 },
+            { q: "What is the primary purpose of Feature Scaling?", o: ["To convert data into CSV format", "To bring features to similar scales for better model performance", "To eliminate target labels", "To calculate F1 scores"], a: 1 },
+            { q: "Normalization (Min-Max Scaling) rescales feature values into which bounded range?", o: ["[-1, 1]", "[0, 1]", "[0, infinity]", "[-mu, +mu]"], a: 1 },
+            { q: "What is the mathematical formula for Min-Max Normalization?", o: ["x' = (x - mu) / sigma", "x' = (x - xmin) / (xmax - xmin)", "x' = x / sum(x)", "x' = log(x)"], a: 1 },
+            { q: "Standardization transforms data to have ______.", o: ["Range between 0 and 1", "Zero mean (mu=0) and unit variance (sigma=1)", "Maximum value of 100", "Positive values only"], a: 1 },
+            { q: "What is the formula for Z-score Standardization?", o: ["z = (x - xmin) / (xmax - xmin)", "z = (x - mu) / sigma", "z = (x - mu)^2", "z = sigma / mu"], a: 1 },
+            { q: "Which Scikit-Learn class is used to perform Z-score Standardization?", o: ["MinMaxScaler", "StandardScaler", "SimpleImputer", "LabelEncoder"], a: 1 },
+            { q: "Standardization is explicitly listed as suitable for ______.", o: ["Decision Trees only", "Logistic Regression, SVM, and Neural Networks", "Hardcoded rule lists", "Raw text files"], a: 1 },
+            { q: "Normalization is listed as particularly suited for ______.", o: ["Neural Networks", "Decision Trees", "Random Forests", "Linear Discriminants"], a: 0 },
+            { q: "What is a key benefit of Feature Selection?", o: ["Increases model complexity", "Reduces overfitting, speeds up training, lowers complexity", "Generates missing data", "Eliminates dataset evaluation"], a: 1 },
+            { q: "Which of the following is listed as a Feature Selection method?", o: ["Mean Imputation", "Pearson Correlation / Chi-Square / RFE", "Min-Max Scaling", "Train Test Split"], a: 1 },
+            { q: "What is the range of the Pearson Correlation Coefficient r?", o: ["0 <= r <= 1", "-1 <= r <= 1", "-infinity <= r <= +infinity", "0 <= r <= 100"], a: 1 },
+            { q: "A Pearson correlation value of r = +1 indicates ______.", o: ["Strong negative correlation", "Strong positive linear correlation", "No correlation", "Random noise"], a: 1 },
+            { q: "A Pearson correlation value of r = 0 indicates ______.", o: ["Perfect positive linear relationship", "No linear correlation", "Perfect inverse correlation", "Invalid data"], a: 1 },
+            { q: "A Pearson correlation value of r = -1 indicates ______.", o: ["Strong negative linear correlation", "Strong positive correlation", "Zero correlation", "Missing features"], a: 0 },
+            { q: "What Seaborn function plots a visual correlation heatmap matrix?", o: ["sns.scatterplot()", "sns.heatmap()", "sns.boxplot()", "sns.barplot()"], a: 1 },
+            { q: "What does annot=True do in sns.heatmap(correlation, annot=True)?", o: ["Removes colors", "Displays numeric correlation values inside grid cells", "Automatically cleans data", "Scales features to [0,1]"], a: 1 },
+            { q: "In the feature engineering pipeline, generating date features (e.g., Day of week, Month) from timestamps is an example of ______.", o: ["Data cleaning", "Creating useful variables from existing data", "Standardization", "Imputation"], a: 1 },
+            { q: "Which method fits the scaling transformation parameters on training data and transforms it in one step?", o: ["scaler.fit_transform(X)", "scaler.predict(X)", "scaler.score(X)", "scaler.impute(X)"], a: 0 },
+            { q: "What is the correct Data Preparation Workflow sequence?", o: ["Training -> Scaling -> Cleaning -> Raw Data", "Raw Data -> Cleaning -> Scaling -> Feature Selection -> Training -> Testing", "Feature Selection -> Testing -> Raw Data -> Cleaning", "Scaling -> Raw Data -> Training -> Cleaning"], a: 1 },
+            { q: "Removing records with missing values is called ______.", o: ["Deleting records / Complete case analysis", "Mean imputation", "Standardization", "Feature extraction"], a: 0 },
+            { q: "Mode imputation fills missing values with the ______.", o: ["Mean value", "Most frequent value", "Median value", "Zero constant"], a: 1 },
+            { q: "Median imputation is preferred over Mean imputation when the feature contains ______.", o: ["Zero entries", "Extreme outliers or skewed distributions", "String text values", "Binary labels"], a: 1 },
+            { q: "What is RFE in feature selection?", o: ["Random Feature Engineering", "Recursive Feature Elimination", "Real Feature Estimation", "Regression Feature Error"], a: 1 },
+            { q: "Mutual Information measures ______.", o: ["Linear distance between vectors", "Dependency / information shared between variables", "Missing value counts", "Training execution time"], a: 1 },
+            { q: "Highly correlated features (r > 0.95) should often be pruned because they ______.", o: ["Crash Python scripts", "Provide redundant information and increase model complexity", "Reduce accuracy to zero", "Cause underfitting"], a: 1 },
+            { q: "What Pandas code snippet computes pairwise feature correlations?", o: ["df.isnull()", "df.corr()", "df.describe()", "df.info()"], a: 1 },
+            { q: "Normalization rescales a value x = 180 where xmin = 150 and xmax = 200 to ______.", o: ["(180 - 150) / (200 - 150) = 0.6", "0.8", "1.0", "0.2"], a: 0 },
+            { q: "Standardization transforms a feature vector such that its mean becomes ______.", o: ["1.0", "0.0", "100.0", "-1.0"], a: 1 },
+            { q: "Standardization transforms a feature vector such that its standard deviation becomes ______.", o: ["0.0", "1.0", "Variance", "0.5"], a: 1 },
+            { q: "Correcting invalid data types (e.g., converting text '$25' to numeric 25.0) is a task in ______.", o: ["Feature selection", "Data Cleaning", "Model deployment", "Cross validation"], a: 1 },
+            { q: "What happens if feature scaling is omitted when using distance-based algorithms like KNN?", o: ["Features with larger numerical magnitudes dominate the distance calculations", "Model accuracy improves automatically", "Data is deleted", "Gradient descent speeds up"], a: 0 },
+            { q: "Which feature selection test evaluates categorical features against categorical targets?", o: ["Pearson Correlation", "Chi-Square (chi^2) Test", "Mean Squared Error", "Euclidean Distance"], a: 1 },
+            { q: "Creating a polynomial feature x1^2 from an existing feature x1 is an example of ______.", o: ["Data cleaning", "Feature Engineering", "Data splitting", "Imputation"], a: 1 },
+            { q: "Applying fit_transform() on the test dataset instead of train dataset causes ______.", o: ["Data leakage / improper validation", "Faster execution", "100% accuracy", "Zero variance"], a: 0 }
+        ];
+
+        const m6QuestionPool = [
+            { q: "Which Matplotlib function plots a Histogram?", o: ["plt.bar()", "plt.hist()", "plt.boxplot()", "plt.scatter()"], a: 1 },
+            { q: "Histograms are used to visualize the ______.", o: ["Comparison across discrete departments", "Frequency distribution of numerical data divided into bins", "Correlation between two features", "Trend line equation"], a: 1 },
+            { q: "In plt.hist(marks, bins=5), what does bins=5 specify?", o: ["5 plot titles", "5 equal-width interval buckets", "5 data points", "5 chart colors"], a: 1 },
+            { q: "Which Matplotlib chart is best suited for comparing discrete categories (e.g., Department placements)?", o: ["plt.hist()", "plt.bar()", "plt.scatter()", "plt.plot()"], a: 1 },
+            { q: "What function renders a Box Plot in Matplotlib?", o: ["plt.boxplot()", "plt.plot_box()", "plt.hist_box()", "plt.bar_box()"], a: 0 },
+            { q: "A Box Plot displays summary statistics based on ______.", o: ["2 metric points", "5-number summary (Min, Q1, Median, Q3, Max)", "Mean and Variance only", "Correlation coefficient r"], a: 1 },
+            { q: "Outliers in data are easily identified visually using which plot?", o: ["Bar plot", "Box plot", "Line graph", "Pie chart"], a: 1 },
+            { q: "What plot renders bivariate points along two axes to show feature relationships?", o: ["Histogram", "Scatter Plot (plt.scatter())", "Bar Plot", "Box Plot"], a: 1 },
+            { q: "To fit a linear Trend Line over a scatter plot, NumPy provides which fitting function?", o: ["np.array()", "np.polyfit(x, y, 1)", "np.mean()", "np.var()"], a: 1 },
+            { q: "In m, c = np.polyfit(hours, marks, 1), what does 1 represent?", o: ["1 data point", "1st degree linear equation (y = mx + c)", "1 bin", "1 plot"], a: 1 },
+            { q: "What line drawing function overlays the calculated trend line onto a Matplotlib figure?", o: ["plt.scatter()", "plt.plot(x, m*x + c)", "plt.bar()", "plt.hist()"], a: 1 },
+            { q: "Which Python library is built on top of Matplotlib specifically for high-level statistical graphics?", o: ["NumPy", "Seaborn", "Pandas", "Scikit-Learn"], a: 1 },
+            { q: "What function call displays a rendered Matplotlib chart on the screen?", o: ["plt.render()", "plt.show()", "plt.display()", "plt.print()"], a: 1 },
+            { q: "What function adds a main title to a Matplotlib plot?", o: ["plt.title('Title Name')", "plt.label('Title Name')", "plt.header('Title Name')", "plt.name('Title Name')"], a: 0 },
+            { q: "What function provides descriptive summary statistics (count, mean, std, min, max, quartiles) for a Pandas DataFrame?", o: ["df.info()", "df.describe()", "df.head()", "df.corr()"], a: 1 },
+            { q: "What does the middle line inside the box of a Box Plot represent?", o: ["Mean", "Median (50th percentile / Q2)", "Mode", "Maximum"], a: 1 },
+            { q: "The top edge of the box in a Box Plot represents the ______.", o: ["First Quartile (Q1)", "Third Quartile (Q3)", "Maximum", "Mean"], a: 1 },
+            { q: "The bottom edge of the box in a Box Plot represents the ______.", o: ["First Quartile (Q1)", "Third Quartile (Q3)", "Minimum", "Median"], a: 0 },
+            { q: "In a Scatter Plot of Study Hours vs. Marks, if marks increase as study hours increase, the relationship exhibits ______.", o: ["Negative correlation", "Positive correlation", "Zero correlation", "Parabolic symmetry"], a: 1 },
+            { q: "Which chart is explicitly listed in the slides as supported by Matplotlib?", o: ["Histogram, Bar Plot, Scatter Plot, Pie Chart, Line Graph, Box Plot", "Network Graph only", "3D CAD mesh only", "Flowchart diagrams"], a: 0 },
+            { q: "What Matplotlib plot displays proportions of a whole as slice wedges?", o: ["Bar Plot", "Pie Chart", "Box Plot", "Histogram"], a: 1 },
+            { q: "What Pandas Data Structure represents a 2D labeled tabular data array?", o: ["Series", "DataFrame", "Panel", "Scalar"], a: 1 },
+            { q: "What Pandas Data Structure represents a 1D labeled array?", o: ["DataFrame", "Series", "Matrix", "Tensor"], a: 1 },
+            { q: "Which method reads a comma-separated values file into a Pandas DataFrame?", o: ["pd.read_csv()", "pd.open_csv()", "pd.load_csv()", "pd.import_csv()"], a: 0 },
+            { q: "NumPy arrays are preferred over standard Python lists for data processing because they offer ______.", o: ["Fast numerical computation and efficient vector memory operations", "Automatic web scraping", "Built-in GUI windows", "Database storage"], a: 0 },
+            { q: "What NumPy function finds the maximum value in an array a?", o: ["a.max()", "a.top()", "a.highest()", "a.upper()"], a: 0 },
+            { q: "What NumPy function finds the mean value of an array a?", o: ["a.mean()", "a.average()", "a.mid()", "a.norm()"], a: 0 },
+            { q: "In Scikit-Learn, how do you load the built-in Iris toy dataset?", o: ["from sklearn.datasets import load_iris", "import iris", "pd.get_iris()", "plt.load_iris()"], a: 0 },
+            { q: "For the Iris dataset loaded via iris = load_iris(), what does iris.data contain?", o: ["Target class labels", "Feature values matrix X", "Model accuracy", "Plot figures"], a: 1 },
+            { q: "What does iris.target contain?", o: ["Feature array X", "Class label target vector y", "Missing values", "Standard deviations"], a: 1 },
+            { q: "What is the shape of iris.data in Scikit-Learn?", o: ["(100, 2)", "(150, 4)", "(500, 10)", "(1000, 1)"], a: 1 },
+            { q: "What model class is instantiated via from sklearn.tree import DecisionTreeClassifier?", o: ["Linear Regression", "Decision Tree Classifier", "K-Means", "Principal Component Analysis"], a: 1 },
+            { q: "What method fits an ML model on training data in Scikit-Learn?", o: ["model.fit(X_train, y_train)", "model.run(X_train)", "model.compile(X_train)", "model.train_data()"], a: 0 },
+            { q: "What method calculates model score accuracy on test data in Scikit-Learn?", o: ["model.evaluate(X_test)", "model.score(X_test, y_test)", "model.test(X_test)", "model.check(y_test)"], a: 1 },
+            { q: "The upper whisker line of a Box Plot extends to the ______.", o: ["Median", "Maximum sample value within 1.5 * IQR", "Mean", "Outlier point"], a: 1 },
+            { q: "The lower whisker line of a Box Plot extends to the ______.", o: ["Minimum sample value within 1.5 * IQR", "Zero line", "Q1", "Standard deviation"], a: 0 },
+            { q: "Why are trend lines useful in scatter plots?", o: ["They obscure individual points", "They visually highlight underlying linear patterns/trends between two continuous features", "They calculate missing values", "They split training and testing data"], a: 1 },
+            { q: "Which Matplotlib function call sets the horizontal X-axis label?", o: ["plt.xlabel('Name')", "plt.xname('Name')", "plt.set_x('Name')", "plt.x_title('Name')"], a: 0 },
+            { q: "Which Matplotlib function call sets the vertical Y-axis label?", o: ["plt.ylabel('Name')", "plt.yname('Name')", "plt.set_y('Name')", "plt.y_title('Name')"], a: 0 },
+            { q: "What Python module provides Scikit-Learn dataset loading utilities?", o: ["sklearn.datasets", "sklearn.preprocessing", "sklearn.metrics", "sklearn.model_selection"], a: 0 }
+        ];
+
+        let quizState = {
+            m1: { set: [], index: 0, submitted: false },
+            m2: { set: [], index: 0, submitted: false },
+            m3: { set: [], index: 0, submitted: false },
+            m4: { set: [], index: 0, submitted: false },
+            m5: { set: [], index: 0, submitted: false },
+            m6: { set: [], index: 0, submitted: false }
+        };
+
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('app-sidebar');
+            if (sidebar) sidebar.classList.toggle('mobile-open');
+        }
+
+        function toggleBranch(branchId) {
+            const branchEl = document.getElementById(`branch-${branchId}`);
+            if (branchEl && !branchEl.classList.contains('locked-branch')) {
+                branchEl.classList.toggle('collapsed');
+            }
+        }
+
+        function shuffleArray(array) {
+            let currentIdx = array.length, randomIdx;
+            while (currentIdx !== 0) {
+                randomIdx = Math.floor(Math.random() * currentIdx);
+                currentIdx--;
+                [array[currentIdx], array[randomIdx]] = [array[randomIdx], array[currentIdx]];
+            }
+            return array;
+        }
+
+        function prepareQuizSet(type) {
+            let poolMap = {
+                m1: m1QuestionPool,
+                m2: m2QuestionPool,
+                m3: m3QuestionPool,
+                m4: m4QuestionPool,
+                m5: m5QuestionPool,
+                m6: m6QuestionPool
+            };
+            let pool = poolMap[type];
+            let clonedPool = JSON.parse(JSON.stringify(pool));
+            shuffleArray(clonedPool);
+            quizState[type].set = clonedPool.slice(0, 10);
+            quizState[type].index = 0;
+            quizState[type].submitted = false;
+        }
+
+        function navigateToPage(targetPageId) {
+            const targetMenuItem = document.getElementById(`menu-${targetPageId}`);
+            if (targetMenuItem && targetMenuItem.classList.contains('locked-item')) {
+                return false; 
+            }
+            
+            document.querySelectorAll('.app-page').forEach(page => page.classList.remove('active-page'));
+            document.querySelectorAll('.topic-menu-item').forEach(item => item.classList.remove('active-item'));
+
+            const targetPage = document.getElementById(`page-${targetPageId}`);
+            if(targetPage) targetPage.classList.add('active-page');
+            if(targetMenuItem) targetMenuItem.classList.add('active-item');
+            
+            const sidebar = document.getElementById('app-sidebar');
+            if (sidebar) sidebar.classList.remove('mobile-open');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return true;
+        }
+
+        function stepTopic(direction) {
+            const activePage = document.querySelector('.app-page.active-page');
+            if (!activePage) return;
+
+            const currentId = activePage.id.replace('page-', '');
+            const currentIdx = TOPIC_ORDER.indexOf(currentId);
+            if (currentIdx === -1) return;
+
+            const targetIdx = currentIdx + direction;
+            if (targetIdx >= 0 && targetIdx < TOPIC_ORDER.length) {
+                const targetId = TOPIC_ORDER[targetIdx];
+                const targetMenuItem = document.getElementById(`menu-${targetId}`);
+
+                if (targetMenuItem && targetMenuItem.classList.contains('locked-item')) {
+                    document.getElementById(`quiz-box-${currentId}`)?.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    navigateToPage(targetId);
+                }
+            }
+        }
+
+        function injectTopicNavigation() {
+            TOPIC_ORDER.forEach((topicId, idx) => {
+                const pageEl = document.getElementById(`page-${topicId}`);
+                if (!pageEl) return;
+                const sectionEl = pageEl.querySelector('section');
+                if (!sectionEl) return;
+
+                const existingNav = sectionEl.querySelector('.topic-page-nav');
+                if (existingNav) existingNav.remove();
+
+                const navDiv = document.createElement('div');
+                navDiv.className = 'topic-page-nav';
+
+                const prevTopicId = idx > 0 ? TOPIC_ORDER[idx - 1] : null;
+                const nextTopicId = idx < TOPIC_ORDER.length - 1 ? TOPIC_ORDER[idx + 1] : null;
+
+                const prevBtn = document.createElement('button');
+                prevBtn.className = 'topic-nav-btn';
+                prevBtn.innerHTML = '← Previous Module';
+                if (!prevTopicId) {
+                    prevBtn.disabled = true;
+                } else {
+                    prevBtn.onclick = () => stepTopic(-1);
+                }
+
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'topic-nav-btn';
+                
+                if (!nextTopicId) {
+                    nextBtn.innerHTML = 'Course Completed 🎉';
+                    nextBtn.disabled = true;
+                } else {
+                    const isNextLocked = document.getElementById(`menu-${nextTopicId}`)?.classList.contains('locked-item');
+                    if (isNextLocked) {
+                        nextBtn.innerHTML = '🔒 Complete Quiz to Unlock Next';
+                        nextBtn.classList.add('locked-next-btn');
+                    } else {
+                        nextBtn.innerHTML = 'Next Module →';
+                    }
+                    nextBtn.onclick = () => stepTopic(1);
+                }
+
+                navDiv.appendChild(prevBtn);
+                navDiv.appendChild(nextBtn);
+                sectionEl.appendChild(navDiv);
+            });
+        }
+
+        function updateCourseProgressWidget() {
+            let unlockedCount = 1;
+            for (let i = 2; i <= 6; i++) {
+                if (localStorage.getItem(`ml_m${i}_unlocked`) === 'true') {
+                    unlockedCount = i;
+                }
+            }
+            
+            let calculatedPercentage = Math.round((unlockedCount / TOTAL_TOPICS_COUNT) * 100);
+            document.getElementById('progress-percent-txt').textContent = `${calculatedPercentage}%`;
+            document.getElementById('progress-count-txt').textContent = unlockedCount;
+            document.getElementById('course-progress-fill').style.width = `${calculatedPercentage}%`;
+        }
+
+        function renderQuizHTML(type) {
+            if (quizState[type].set.length === 0) {
+                prepareQuizSet(type);
+            }
+            
+            const container = document.getElementById(`slider-content-area-${type}`);
+            if (!container) return;
+            container.innerHTML = '';
+
+            quizState[type].set.forEach((qObj, qIdx) => {
+                const slideDiv = document.createElement('div');
+                slideDiv.className = `quiz-slide ${qIdx === quizState[type].index ? 'active-slide' : ''}`;
+                slideDiv.id = `slide-${type}-${qIdx}`;
+                slideDiv.innerHTML = `<p style="font-size:1rem; font-weight:600;"><strong>Q${qIdx + 1}:</strong> ${qObj.q}</p>`;
+
+                const optionsDiv = document.createElement('div');
+                optionsDiv.className = 'quiz-options';
+
+                qObj.o.forEach((opt, oIdx) => {
+                    optionsDiv.innerHTML += `
+                        <label class="option-wrapper" id="label-${type}-${qIdx}-${oIdx}">
+                            <input type="radio" name="question-${type}-${qIdx}" value="${oIdx}">
+                            <span>${opt}</span>
+                        </label>
+                    `;
+                });
+
+                slideDiv.appendChild(optionsDiv);
+                container.appendChild(slideDiv);
+            });
+
+            updateSliderControlsUI(type);
+        }
+
+        function shiftQuizSlide(type, direction) {
+            document.getElementById(`slide-${type}-${quizState[type].index}`).classList.remove('active-slide');
+            quizState[type].index += direction;
+            if (quizState[type].index < 0) quizState[type].index = 0;
+            if (quizState[type].index >= 10) quizState[type].index = 9;
+            document.getElementById(`slide-${type}-${quizState[type].index}`).classList.add('active-slide');
+            updateSliderControlsUI(type);
+        }
+
+        function updateSliderControlsUI(type) {
+            document.getElementById(`slide-index-txt-${type}`).textContent = `Question ${quizState[type].index + 1} / 10`;
+            document.getElementById(`prev-btn-${type}`).disabled = (quizState[type].index === 0);
+            document.getElementById(`next-btn-${type}`).disabled = (quizState[type].index === 9);
+            document.getElementById(`review-btn-${type}`).style.display = quizState[type].submitted ? 'inline-block' : 'none';
+        }
+
+        function evaluateQuiz(type) {
+            let score = 0;
+            let unanswered = false;
+
+            quizState[type].set.forEach((qObj, qIdx) => {
+                const selected = document.querySelector(`input[name="question-${type}-${qIdx}"]:checked`);
+                if (!selected) {
+                    unanswered = true;
+                } else if (parseInt(selected.value) === qObj.a) {
+                    score++;
+                }
+            });
+
+            const feedback = document.getElementById(`feedback-${type}`);
+            feedback.style.display = 'block';
+
+            if (unanswered) {
+                feedback.className = "quiz-feedback fail";
+                feedback.innerHTML = "⚠️ Evaluation incomplete. Please answer all 10 questions before submitting.";
+                return;
+            }
+
+            quizState[type].submitted = true;
+
+            document.querySelectorAll(`input[name^="question-${type}-"]`).forEach(input => {
+                input.disabled = true;
+            });
+
+            const submitBtn = document.getElementById(`submit-btn-${type}`);
+            if (submitBtn) submitBtn.style.display = 'none';
+
+            document.getElementById(`review-btn-${type}`).style.display = 'inline-block';
+
+            if (score >= 4) {
+                feedback.className = "quiz-feedback success";
+                
+                let nextModMap = { m1: 'm2', m2: 'm3', m3: 'm4', m4: 'm5', m5: 'm6' };
+                let nextMod = nextModMap[type];
+
+                if (nextMod) {
+                    feedback.innerHTML = `🎉 You scored ${score}/10. Next Section is now unlocked!`;
+                    localStorage.setItem(`ml_${nextMod}_unlocked`, 'true');
+                } else {
+                    feedback.innerHTML = `🎉 You scored ${score}/10. You have completed all Machine Learning modules!`;
+                }
+                
+                updateCourseProgressWidget();
+                applyUnlockUIState();
+                injectTopicNavigation();
+            } else {
+                feedback.className = "quiz-feedback fail";
+                feedback.innerHTML = `❌ Score ${score}/10. A score of 4 or higher (&ge; 40%) is required to unlock the next module. Review mistakes or retake with a fresh sample.`;
+                document.getElementById(`retake-btn-${type}`).style.display = 'inline-block';
+            }
+        }
+
+        function retakeQuiz(type) {
+            const feedback = document.getElementById(`feedback-${type}`);
+            if (feedback) feedback.style.display = 'none';
+
+            const submitBtn = document.getElementById(`submit-btn-${type}`);
+            if (submitBtn) submitBtn.style.display = 'inline-block';
+
+            const retakeBtn = document.getElementById(`retake-btn-${type}`);
+            if (retakeBtn) retakeBtn.style.display = 'none';
+
+            const reviewBtn = document.getElementById(`review-btn-${type}`);
+            if (reviewBtn) reviewBtn.style.display = 'none';
+
+            prepareQuizSet(type);
+            renderQuizHTML(type);
+        }
+
+        function toggleReviewMode(type) {
+            if (!quizState[type].submitted) return; 
+            quizState[type].set.forEach((qObj, qIdx) => {
+                const selected = document.querySelector(`input[name="question-${type}-${qIdx}"]:checked`);
+                const selectedValue = selected ? parseInt(selected.value) : null;
+                qObj.o.forEach((opt, oIdx) => {
+                    const targetsLabel = document.getElementById(`label-${type}-${qIdx}-${oIdx}`);
+                    if (!targetsLabel) return;
+                    targetsLabel.classList.remove('review-correct', 'review-incorrect');
+                    if (oIdx === qObj.a) {
+                        targetsLabel.classList.add('review-correct');
+                        if (!targetsLabel.innerHTML.includes('✅')) {
+                            targetsLabel.innerHTML += ' <span style="float:right;">✅ Correct</span>';
+                        }
+                    }
+                    if (selectedValue !== null && selectedValue !== qObj.a && oIdx === selectedValue) {
+                        targetsLabel.classList.add('review-incorrect');
+                        if (!targetsLabel.innerHTML.includes('❌')) {
+                            targetsLabel.innerHTML += ' <span style="float:right;">❌ Incorrect</span>';
+                        }
+                    }
+                });
+            });
+        }
+
+        function applyUnlockUIState() {
+            for (let i = 2; i <= 6; i++) {
+                const isUnlocked = localStorage.getItem(`ml_m${i}_unlocked`) === 'true';
+                if (isUnlocked) {
+                    const branch = document.getElementById(`branch-m${i}`);
+                    if (branch) {
+                        branch.classList.remove('locked-branch');
+                        const hub = branch.querySelector('.branch-hub');
+                        if (hub) hub.innerHTML = hub.innerHTML.replace('🔒 ', '');
+                    }
+                    
+                    const item = document.getElementById(`menu-m${i}`);
+                    if (item) {
+                        item.classList.remove('locked-item');
+                        item.innerHTML = item.innerHTML.replace('🔒 ', '');
+                    }
+                }
+            }
+        }
+
+        function checkLocalStorageStateOnLoad() {
+            ['m1', 'm2', 'm3', 'm4', 'm5', 'm6'].forEach(m => prepareQuizSet(m));
+
+            for (let i = 1; i <= 5; i++) {
+                let nextMod = `m${i+1}`;
+                if (localStorage.getItem(`ml_${nextMod}_unlocked`) === 'true') {
+                    quizState[`m${i}`].submitted = true;
+                    const submitBtn = document.getElementById(`submit-btn-m${i}`);
+                    if (submitBtn) submitBtn.style.display = 'none';
+                }
+            }
+
+            applyUnlockUIState();
+            ['m1', 'm2', 'm3', 'm4', 'm5', 'm6'].forEach(m => renderQuizHTML(m));
+            updateCourseProgressWidget();
+            injectTopicNavigation();
+        }
+
+        function clearSavedProgress() {
+            for (let i = 2; i <= 6; i++) {
+                localStorage.removeItem(`ml_m${i}_unlocked`);
+            }
+            alert("Progress cleared! Map locks have been restored.");
+            window.location.reload();
+        }
+
+        window.onload = function() {
+            checkLocalStorageStateOnLoad();
+        };
+    </script>
+</body>
+</html>
